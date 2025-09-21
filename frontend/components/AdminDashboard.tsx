@@ -88,82 +88,117 @@ const AdminDashboard = () => {
     }
   }, [])
 
-  const loadDashboardData = () => {
-    // Mock data
-    const mockProjects: Project[] = [
-      {
-        id: 1,
-        title: 'شقق فاخرة في التجمع الخامس',
-        description: 'شقق فاخرة مع إطلالة رائعة',
-        longDescription: 'وصف تفصيلي للمشروع...',
-        location: 'التجمع الخامس، القاهرة',
-        price: 'بداية من 2,500,000 جنيه',
-        area: '120-200 متر مربع',
-        completionDate: 'Q2 2025',
-        status: 'Available',
-        specifications: {
-          bedrooms: '2-3',
-          bathrooms: '2-3',
-          parking: '1-2',
-          floor: '3-15',
-          type: 'شقة'
-        },
-        features: ['تشطيب فاخر', 'إطلالة رائعة'],
-        images: [],
-        createdAt: new Date().toISOString(),
-        views: 150
-      },
-      {
-        id: 2,
-        title: 'فيلات في الشروق',
-        description: 'فيلات فاخرة في الشروق',
-        longDescription: 'وصف تفصيلي للمشروع...',
-        location: 'الشروق، القاهرة',
-        price: 'بداية من 5,000,000 جنيه',
-        area: '300-500 متر مربع',
-        completionDate: 'Q3 2025',
-        status: 'Under Construction',
-        specifications: {
-          bedrooms: '4-5',
-          bathrooms: '4-5',
-          parking: '2-3',
-          floor: 'أرضي + 2',
-          type: 'فيلا'
-        },
-        features: ['حديقة خاصة', 'مسبح'],
-        images: [],
-        createdAt: new Date().toISOString(),
-        views: 89
-      }
-    ]
+  const loadDashboardData = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    const token = localStorage.getItem('adminToken')
+    
+    try {
+      // Try to load real data from API
+      const [projectsResponse, contactsResponse, statsResponse] = await Promise.allSettled([
+        fetch(`${apiUrl}/api/projects`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${apiUrl}/api/contacts`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${apiUrl}/api/admin/dashboard`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ])
 
-    const mockContacts: Contact[] = [
-      {
-        id: 1,
-        name: 'أحمد محمد',
-        email: 'ahmed@example.com',
-        phone: '+20 123 456 7890',
-        message: 'أريد الاستفسار عن الشقق المتاحة',
-        status: 'New',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        name: 'فاطمة علي',
-        email: 'fatma@example.com',
-        phone: '+20 987 654 3210',
-        message: 'متى سيكون المشروع جاهز؟',
-        status: 'Resolved',
-        createdAt: new Date().toISOString()
+      if (projectsResponse.status === 'fulfilled' && projectsResponse.value.ok) {
+        const projectsData = await projectsResponse.value.json()
+        setProjects(projectsData)
       }
-    ]
 
-    setProjects(mockProjects)
-    setContacts(mockContacts)
-    setStats({
-      projects: { total: 2, available: 1, completed: 0, featured: 0 },
-      contacts: { total: 2, new: 1, resolved: 1 }
-    })
+      if (contactsResponse.status === 'fulfilled' && contactsResponse.value.ok) {
+        const contactsData = await contactsResponse.value.json()
+        setContacts(contactsData)
+      }
+
+      if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
+        const statsData = await statsResponse.value.json()
+        setStats(statsData)
+      }
+    } catch (error) {
+      console.log('API not available, using mock data')
+      
+      // Fallback: Mock data
+      const mockProjects: Project[] = [
+        {
+          id: 1,
+          title: 'شقق فاخرة في التجمع الخامس',
+          description: 'شقق فاخرة مع إطلالة رائعة',
+          longDescription: 'وصف تفصيلي للمشروع...',
+          location: 'التجمع الخامس، القاهرة',
+          price: 'بداية من 2,500,000 جنيه',
+          area: '120-200 متر مربع',
+          completionDate: 'Q2 2025',
+          status: 'Available',
+          specifications: {
+            bedrooms: '2-3',
+            bathrooms: '2-3',
+            parking: '1-2',
+            floor: '3-15',
+            type: 'شقة'
+          },
+          features: ['تشطيب فاخر', 'إطلالة رائعة'],
+          images: [],
+          createdAt: new Date().toISOString(),
+          views: 150
+        },
+        {
+          id: 2,
+          title: 'فيلات في الشروق',
+          description: 'فيلات فاخرة في الشروق',
+          longDescription: 'وصف تفصيلي للمشروع...',
+          location: 'الشروق، القاهرة',
+          price: 'بداية من 5,000,000 جنيه',
+          area: '300-500 متر مربع',
+          completionDate: 'Q3 2025',
+          status: 'Under Construction',
+          specifications: {
+            bedrooms: '4-5',
+            bathrooms: '4-5',
+            parking: '2-3',
+            floor: 'أرضي + 2',
+            type: 'فيلا'
+          },
+          features: ['حديقة خاصة', 'مسبح'],
+          images: [],
+          createdAt: new Date().toISOString(),
+          views: 89
+        }
+      ]
+
+      const mockContacts: Contact[] = [
+        {
+          id: 1,
+          name: 'أحمد محمد',
+          email: 'ahmed@example.com',
+          phone: '+20 123 456 7890',
+          message: 'أريد الاستفسار عن الشقق المتاحة',
+          status: 'New',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 2,
+          name: 'فاطمة علي',
+          email: 'fatma@example.com',
+          phone: '+20 987 654 3210',
+          message: 'متى سيكون المشروع جاهز؟',
+          status: 'Resolved',
+          createdAt: new Date().toISOString()
+        }
+      ]
+
+      setProjects(mockProjects)
+      setContacts(mockContacts)
+      setStats({
+        projects: { total: 2, available: 1, completed: 0, featured: 0 },
+        contacts: { total: 2, new: 1, resolved: 1 }
+      })
+    }
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -173,7 +208,30 @@ const AdminDashboard = () => {
       const email = formData.get('email') as string
       const password = formData.get('password') as string
 
-      // For now, use mock authentication
+      // Try real API first
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      
+      try {
+        const response = await fetch(`${apiUrl}/api/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          localStorage.setItem('adminToken', data.token)
+          setIsAuthenticated(true)
+          loadDashboardData()
+          return
+        }
+      } catch (apiError) {
+        console.log('API not available, using fallback authentication')
+      }
+
+      // Fallback: use mock authentication for development
       if (email === 'admin@smartleader.com' && password) {
         localStorage.setItem('adminToken', 'mock-admin-token')
         setIsAuthenticated(true)
