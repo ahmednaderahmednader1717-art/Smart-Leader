@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X, Lightbulb, Settings, Sun, Moon } from 'lucide-react'
@@ -9,7 +9,16 @@ import { useTheme } from './ThemeProvider'
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
-  const { theme, toggleTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  
+  // Only use theme on client side
+  const themeContext = mounted ? useTheme() : null
+  const theme = themeContext?.theme || 'light'
+  const toggleTheme = themeContext?.toggleTheme || (() => {})
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -58,17 +67,19 @@ const Header = () => {
 
           {/* Theme Toggle & CTA Button */}
           <div className="hidden md:flex items-center space-x-4">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === 'light' ? (
-                <Moon className="h-5 w-5" />
-              ) : (
-                <Sun className="h-5 w-5" />
-              )}
-            </button>
+            {mounted && (
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'light' ? (
+                  <Moon className="h-5 w-5" />
+                ) : (
+                  <Sun className="h-5 w-5" />
+                )}
+              </button>
+            )}
             <Link
               href="/contact"
               className="bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700 transition-colors"
@@ -113,22 +124,24 @@ const Header = () => {
               ))}
               
               {/* Mobile Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className="flex items-center space-x-2 w-full px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                {theme === 'light' ? (
-                  <>
-                    <Moon className="h-4 w-4" />
-                    <span>Dark Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Sun className="h-4 w-4" />
-                    <span>Light Mode</span>
-                  </>
-                )}
-              </button>
+              {mounted && (
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center space-x-2 w-full px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {theme === 'light' ? (
+                    <>
+                      <Moon className="h-4 w-4" />
+                      <span>Dark Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sun className="h-4 w-4" />
+                      <span>Light Mode</span>
+                    </>
+                  )}
+                </button>
+              )}
               
               <Link
                 href="/contact"

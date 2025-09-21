@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://smart-leader-real-estate.vercel.app'),
   title: 'Smart Leader - Your Smart Guide to Real Estate Success',
   description: 'Your smart guide to real estate success. Discover exceptional properties that combine luxury, comfort, and prime locations in Egypt.',
   keywords: 'real estate, egypt, apartments, villas, commercial, luxury, smart leader',
