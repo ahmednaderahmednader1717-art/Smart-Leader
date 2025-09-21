@@ -21,9 +21,9 @@ interface Project {
   id: number
   title: string
   description: string
-  longDescription: string
+  longDescription?: string
   location: string
-  price: string
+  price: number
   area: string
   completionDate: string
   status: string
@@ -61,7 +61,7 @@ const AdminDashboard = () => {
     description: '',
     longDescription: '',
     location: '',
-    price: '',
+    price: 0,
     area: '',
     completionDate: '',
     status: 'Available',
@@ -120,7 +120,7 @@ const AdminDashboard = () => {
           description: 'شقق فاخرة مع إطلالة رائعة',
           longDescription: 'وصف تفصيلي للمشروع...',
           location: 'التجمع الخامس، القاهرة',
-          price: 'بداية من 2,500,000 جنيه',
+          price: 2500000,
           area: '120-200 متر مربع',
           completionDate: 'Q2 2025',
           status: 'Available',
@@ -142,7 +142,7 @@ const AdminDashboard = () => {
           description: 'فيلات فاخرة في الشروق',
           longDescription: 'وصف تفصيلي للمشروع...',
           location: 'الشروق، القاهرة',
-          price: 'بداية من 5,000,000 جنيه',
+          price: 5000000,
           area: '300-500 متر مربع',
           completionDate: 'Q3 2025',
           status: 'Under Construction',
@@ -245,7 +245,7 @@ const AdminDashboard = () => {
         description: '',
         longDescription: '',
         location: '',
-        price: '',
+        price: 0,
         area: '',
         completionDate: '',
         status: 'Available',
@@ -309,7 +309,7 @@ const AdminDashboard = () => {
       setNewProject({
         title: project.title,
         description: project.description,
-        longDescription: project.longDescription,
+        longDescription: project.longDescription || '',
         location: project.location,
         price: project.price,
         area: project.area,
@@ -589,12 +589,12 @@ const AdminDashboard = () => {
                           السعر *
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           required
                           value={newProject.price}
-                          onChange={(e) => setNewProject(prev => ({ ...prev, price: e.target.value }))}
+                          onChange={(e) => setNewProject(prev => ({ ...prev, price: Number(e.target.value) }))}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                          placeholder="مثال: بداية من 2,500,000 جنيه"
+                          placeholder="مثال: 2500000"
                         />
                       </div>
                       

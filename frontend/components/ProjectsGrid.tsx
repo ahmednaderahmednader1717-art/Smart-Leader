@@ -6,8 +6,20 @@ import { ArrowRight, MapPin, Calendar, Square } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { projectsService } from '@/lib/firebaseServices'
 
+interface Project {
+  id: number
+  title: string
+  description: string
+  location: string
+  images: string[]
+  status: string
+  price: number
+  area: string
+  completionDate: string
+}
+
 const ProjectsGrid = () => {
-  const [projects, setProjects] = useState([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -23,33 +35,33 @@ const ProjectsGrid = () => {
               id: 1,
               title: 'Luxury Apartments in New Cairo',
               location: 'New Cairo, Egypt',
-              image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+              images: ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'],
               status: 'Available',
-              price: 'Starting from $150,000',
+              price: 150000,
               area: '120-200 sqm',
-              completion: 'Q2 2024',
+              completionDate: 'Q2 2024',
               description: 'Modern luxury apartments with premium amenities and stunning city views.',
             },
             {
               id: 2,
               title: 'Villa Complex in North Coast',
               location: 'North Coast, Egypt',
-              image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+              images: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'],
               status: 'Available',
-              price: 'Starting from $200,000',
+              price: 200000,
               area: '250-400 sqm',
-              completion: 'Q3 2024',
+              completionDate: 'Q3 2024',
               description: 'Exclusive beachfront villas with private pools and direct beach access.',
             },
             {
               id: 3,
               title: 'Commercial Tower in Downtown',
               location: 'Downtown Cairo, Egypt',
-              image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+              images: ['https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'],
               status: 'Available',
-              price: 'Contact for pricing',
+              price: 0, // 0 means "Contact for pricing"
               area: '50-500 sqm',
-              completion: 'Q4 2024',
+              completionDate: 'Q4 2024',
               description: 'State-of-the-art commercial tower with modern office spaces.',
             }
           ])
@@ -62,11 +74,11 @@ const ProjectsGrid = () => {
             id: 1,
             title: 'Luxury Apartments in New Cairo',
             location: 'New Cairo, Egypt',
-            image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+            images: ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'],
             status: 'Available',
-            price: 'Starting from $150,000',
+            price: 150000,
             area: '120-200 sqm',
-            completion: 'Q2 2024',
+            completionDate: 'Q2 2024',
             description: 'Modern luxury apartments with premium amenities and stunning city views.',
           }
         ])
@@ -121,7 +133,7 @@ const ProjectsGrid = () => {
             >
               <div className="relative">
                 <img
-                  src={project.image}
+                  src={project.images[0] || '/placeholder.jpg'}
                   alt={project.title}
                   className="w-full h-64 object-cover"
                 />
@@ -153,14 +165,14 @@ const ProjectsGrid = () => {
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Calendar className="h-4 w-4 mr-2" />
-                    <span>{project.completion}</span>
+                    <span>{project.completionDate}</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-primary-600">
-                    {project.price}
-                  </span>
+                 <div className="flex items-center justify-between">
+                   <span className="text-lg font-semibold text-primary-600">
+                     {project.price === 0 ? 'Contact for pricing' : `$${project.price.toLocaleString()}`}
+                   </span>
                   <Link
                     href={`/projects/${project.id}`}
                     className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm group"

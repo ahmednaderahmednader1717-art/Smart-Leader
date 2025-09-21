@@ -65,7 +65,31 @@ export const projectsService = {
       const projectsRef = collection(db, 'projects');
       const q = query(projectsRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
-      const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const projects = snapshot.docs.map((doc, index) => {
+        const data = doc.data();
+        return {
+          id: data.id || (index + 1), // Use custom ID or fallback to index
+          title: data.title || '',
+          description: data.description || '',
+          longDescription: data.longDescription || '',
+          location: data.location || '',
+          price: Number(data.price) || 0, // Convert to number
+          area: data.area || '',
+          completionDate: data.completionDate || '',
+          status: data.status || '',
+          specifications: data.specifications || {
+            bedrooms: '',
+            bathrooms: '',
+            parking: '',
+            floor: '',
+            type: ''
+          },
+          features: data.features || [],
+          images: data.images || [],
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          views: data.views || 0
+        };
+      });
       return { success: true, data: projects };
     } catch (error) {
       return { success: false, error: error.message };
@@ -149,7 +173,18 @@ export const contactsService = {
       const contactsRef = collection(db, 'contacts');
       const q = query(contactsRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
-      const contacts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const contacts = snapshot.docs.map((doc, index) => {
+        const data = doc.data();
+        return {
+          id: data.id || (index + 1), // Use custom ID or fallback to index
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          message: data.message || '',
+          status: data.status || 'New',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
+        };
+      });
       return { success: true, data: contacts };
     } catch (error) {
       return { success: false, error: error.message };
@@ -195,15 +230,31 @@ export const adminService = {
         doc => doc.data().status === 'New'
       ).length;
 
+      const resolvedContacts = contactsSnapshot.docs.filter(
+        doc => doc.data().status === 'Resolved'
+      ).length;
+
+      const availableProjects = projectsSnapshot.docs.filter(
+        doc => doc.data().status === 'Available'
+      ).length;
+
+      const completedProjects = projectsSnapshot.docs.filter(
+        doc => doc.data().status === 'Completed'
+      ).length;
+
       return {
         success: true,
         data: {
           projects: {
-            total: projectsSnapshot.size
+            total: projectsSnapshot.size,
+            available: availableProjects,
+            completed: completedProjects,
+            featured: Math.min(3, projectsSnapshot.size)
           },
           contacts: {
             total: contactsSnapshot.size,
-            new: newContacts
+            new: newContacts,
+            resolved: resolvedContacts
           }
         }
       };
