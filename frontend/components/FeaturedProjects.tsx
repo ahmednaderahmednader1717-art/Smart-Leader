@@ -13,7 +13,7 @@ interface Project {
   location: string
   images: string[]
   status: string
-  price: number
+  price: string
 }
 
 const FeaturedProjects = () => {
@@ -35,7 +35,7 @@ const FeaturedProjects = () => {
               location: 'New Cairo, Egypt',
               images: ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'],
               status: 'Available',
-              price: 150000,
+              price: 'Starting from $150,000',
               description: 'Modern luxury apartments with premium amenities and stunning city views.',
             },
             {
@@ -44,7 +44,7 @@ const FeaturedProjects = () => {
               location: 'North Coast, Egypt',
               images: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'],
               status: 'Available',
-              price: 200000,
+              price: 'Starting from $200,000',
               description: 'Exclusive beachfront villas with private pools and direct beach access.',
             },
             {
@@ -53,7 +53,7 @@ const FeaturedProjects = () => {
               location: 'Downtown Cairo, Egypt',
               images: ['https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'],
               status: 'Completed',
-              price: 0, // 0 means "Contact for pricing"
+              price: 'Contact for pricing',
               description: 'State-of-the-art commercial tower with modern office spaces.',
             }
           ])
@@ -68,7 +68,7 @@ const FeaturedProjects = () => {
             location: 'New Cairo, Egypt',
             images: ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'],
             status: 'Available',
-            price: 150000,
+            price: 'Starting from $150,000',
             description: 'Modern luxury apartments with premium amenities and stunning city views.',
           }
         ])
@@ -142,7 +142,7 @@ const FeaturedProjects = () => {
                 
                  <div className="flex items-center justify-between">
                    <span className="text-lg font-semibold text-primary-600">
-                     {project.price === 0 ? 'Contact for pricing' : `$${project.price.toLocaleString()}`}
+                     {project.price}
                    </span>
                   <Link
                     href={`/projects/${project.id}`}

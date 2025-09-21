@@ -23,7 +23,7 @@ interface Project {
   description: string
   longDescription?: string
   location: string
-  price: number
+  price: string
   area: string
   completionDate: string
   status: string
@@ -62,7 +62,7 @@ const AdminDashboard = () => {
     description: '',
     longDescription: '',
     location: '',
-    price: 0,
+    price: '',
     area: '',
     completionDate: '',
     status: 'Available',
@@ -121,7 +121,7 @@ const AdminDashboard = () => {
           description: 'شقق فاخرة مع إطلالة رائعة',
           longDescription: 'وصف تفصيلي للمشروع...',
           location: 'التجمع الخامس، القاهرة',
-          price: 2500000,
+          price: 'بداية من 2,500,000 جنيه',
           area: '120-200 متر مربع',
           completionDate: 'Q2 2025',
           status: 'Available',
@@ -143,7 +143,7 @@ const AdminDashboard = () => {
           description: 'فيلات فاخرة في الشروق',
           longDescription: 'وصف تفصيلي للمشروع...',
           location: 'الشروق، القاهرة',
-          price: 5000000,
+          price: 'بداية من 5,000,000 جنيه',
           area: '300-500 متر مربع',
           completionDate: 'Q3 2025',
           status: 'Under Construction',
@@ -241,7 +241,7 @@ const AdminDashboard = () => {
       
       if (result.success) {
         // Reload projects from Firebase
-        loadDashboardData()
+        await loadDashboardData()
         
         // Reset form
         setNewProject({
@@ -249,7 +249,7 @@ const AdminDashboard = () => {
           description: '',
           longDescription: '',
           location: '',
-          price: 0,
+          price: '',
           area: '',
           completionDate: '',
           status: 'Available',
@@ -274,6 +274,27 @@ const AdminDashboard = () => {
       console.error('Error:', error)
       alert('حدث خطأ في العملية')
     }
+  }
+
+  const addImage = () => {
+    setNewProject(prev => ({
+      ...prev,
+      images: [...prev.images, '']
+    }))
+  }
+
+  const removeImage = (index: number) => {
+    setNewProject(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }))
+  }
+
+  const updateImage = (index: number, value: string) => {
+    setNewProject(prev => ({
+      ...prev,
+      images: prev.images.map((img, i) => i === index ? value : img)
+    }))
   }
 
   const addFeature = () => {
@@ -303,7 +324,7 @@ const AdminDashboard = () => {
         const result = await projectsService.deleteProject(id)
         if (result.success) {
           // Reload projects from Firebase
-          loadDashboardData()
+          await loadDashboardData()
           alert('تم حذف المشروع بنجاح!')
         } else {
           alert('فشل حذف المشروع: ' + result.error)
@@ -607,12 +628,12 @@ const AdminDashboard = () => {
                           السعر *
                         </label>
                         <input
-                          type="number"
+                          type="text"
                           required
                           value={newProject.price}
-                          onChange={(e) => setNewProject(prev => ({ ...prev, price: Number(e.target.value) }))}
+                          onChange={(e) => setNewProject(prev => ({ ...prev, price: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                          placeholder="مثال: 2500000"
+                          placeholder="مثال: بداية من 2,500,000 جنيه"
                         />
                       </div>
                       
@@ -773,12 +794,45 @@ const AdminDashboard = () => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        المميزات
+                        الصور *
+                      </label>
+                      {newProject.images.map((image, index) => (
+                        <div key={index} className="flex items-center space-x-2 mb-2">
+                          <input
+                            type="url"
+                            required
+                            value={image}
+                            onChange={(e) => updateImage(index, e.target.value)}
+                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                            placeholder="مثال: https://example.com/image.jpg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="px-3 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addImage}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      >
+                        + إضافة صورة
+                      </button>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        المميزات *
                       </label>
                       {newProject.features.map((feature, index) => (
                         <div key={index} className="flex items-center space-x-2 mb-2">
                           <input
                             type="text"
+                            required
                             value={feature}
                             onChange={(e) => updateFeature(index, e.target.value)}
                             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"

@@ -73,7 +73,7 @@ export const projectsService = {
           description: data.description || '',
           longDescription: data.longDescription || '',
           location: data.location || '',
-          price: Number(data.price) || 0, // Convert to number
+          price: data.price || '', // Keep as string
           area: data.area || '',
           completionDate: data.completionDate || '',
           status: data.status || '',
@@ -120,7 +120,7 @@ export const projectsService = {
       const docRef = await addDoc(collection(db, 'projects'), {
         ...projectData,
         id: uniqueId, // Store custom ID
-        price: Number(projectData.price), // Ensure price is number
+        price: projectData.price, // Keep as string
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -144,7 +144,7 @@ export const projectsService = {
       
       await updateDoc(projectDoc.ref, {
         ...projectData,
-        price: Number(projectData.price), // Ensure price is number
+        price: projectData.price, // Keep as string
         updatedAt: new Date()
       });
       return { success: true };
