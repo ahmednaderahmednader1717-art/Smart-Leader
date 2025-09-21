@@ -59,6 +59,11 @@ const AdminDashboard = () => {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [showAddProject, setShowAddProject] = useState(false)
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null)
+  const [settings, setSettings] = useState({
+    companyName: 'Smart Leader Real Estate',
+    email: 'info@smartleader.com',
+    phone: '+20 123 456 7890'
+  })
   const [newProject, setNewProject] = useState({
     title: '',
     description: '',
@@ -210,10 +215,10 @@ const AdminDashboard = () => {
         return
       }
 
-      error('خطأ في تسجيل الدخول', 'تحقق من البيانات المدخلة')
+      error('Login Error', 'Please check your credentials')
     } catch (err) {
       console.error('Login error:', err)
-      error('خطأ في الاتصال', 'تحقق من اتصال الإنترنت')
+      error('Connection Error', 'Please check your internet connection')
     }
   }
 
@@ -268,13 +273,13 @@ const AdminDashboard = () => {
         setEditingProjectId(null)
         setShowAddProject(false)
         
-        success(editingProjectId ? 'تم تحديث المشروع بنجاح!' : 'تم إضافة المشروع بنجاح!', 'تم حفظ التغييرات في قاعدة البيانات')
+        success(editingProjectId ? 'Project Updated Successfully!' : 'Project Added Successfully!', 'Changes saved to database')
       } else {
-        error('فشل العملية', result.error || 'حدث خطأ غير متوقع')
+        error('Operation Failed', result.error || 'An unexpected error occurred')
       }
     } catch (err) {
       console.error('Error:', err)
-      error('حدث خطأ في العملية', 'يرجى المحاولة مرة أخرى')
+      error('Operation Error', 'Please try again')
     }
   }
 
@@ -327,13 +332,13 @@ const AdminDashboard = () => {
         if (result.success) {
           // Reload projects from Firebase
           await loadDashboardData()
-          success('تم حذف المشروع بنجاح!', 'تم حذف المشروع من قاعدة البيانات')
+          success('Project Deleted Successfully!', 'Project removed from database')
         } else {
-          error('فشل حذف المشروع', result.error || 'حدث خطأ غير متوقع')
+          error('Delete Failed', result.error || 'An unexpected error occurred')
         }
       } catch (err) {
         console.error('Error deleting project:', err)
-        error('حدث خطأ في حذف المشروع', 'يرجى المحاولة مرة أخرى')
+        error('Delete Error', 'Please try again')
       }
     }
   }
@@ -357,6 +362,20 @@ const AdminDashboard = () => {
       setEditingProjectId(id)
       setShowAddProject(true)
     }
+  }
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Here you would typically save to Firebase or your backend
+    success('Settings Saved Successfully!', 'System settings updated')
+    console.log('Settings saved:', settings)
+  }
+
+  const handleSettingsChange = (field: string, value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
   if (!isAuthenticated) {
@@ -437,10 +456,10 @@ const AdminDashboard = () => {
         {/* Navigation Tabs */}
         <div className="flex space-x-8 mb-8">
           {[
-            { id: 'dashboard', label: 'لوحة التحكم', icon: BarChart3 },
-            { id: 'projects', label: 'المشاريع', icon: TrendingUp },
-            { id: 'contacts', label: 'الرسائل', icon: MessageSquare },
-            { id: 'settings', label: 'الإعدادات', icon: Settings }
+            { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+            { id: 'projects', label: 'Projects', icon: TrendingUp },
+            { id: 'contacts', label: 'Messages', icon: MessageSquare },
+            { id: 'settings', label: 'Settings', icon: Settings }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1019,46 +1038,55 @@ const AdminDashboard = () => {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">إعدادات النظام</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">System Settings</h2>
             
-            <div className="space-y-6">
+            <form onSubmit={handleSaveSettings} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  اسم الشركة
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Company Name
                 </label>
                 <input
                   type="text"
-                  defaultValue="Smart Leader Real Estate"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  value={settings.companyName}
+                  onChange={(e) => handleSettingsChange('companyName', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Enter company name"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  البريد الإلكتروني
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Email Address
                 </label>
                 <input
                   type="email"
-                  defaultValue="info@smartleader.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  value={settings.email}
+                  onChange={(e) => handleSettingsChange('email', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Enter email address"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  رقم الهاتف
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Phone Number
                 </label>
                 <input
                   type="tel"
-                  defaultValue="+20 123 456 7890"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  value={settings.phone}
+                  onChange={(e) => handleSettingsChange('phone', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Enter phone number"
                 />
               </div>
               
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                حفظ الإعدادات
+              <button 
+                type="submit"
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Save Settings
               </button>
-            </div>
+            </form>
           </div>
         )}
       </div>

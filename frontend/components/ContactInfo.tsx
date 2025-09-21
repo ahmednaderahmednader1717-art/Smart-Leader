@@ -18,7 +18,7 @@ const ContactInfo = () => {
           <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mr-4">
             <MapPin className="h-6 w-6 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900">Office Information</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Office Information</h3>
         </div>
         
         <div className="space-y-8">
@@ -85,7 +85,7 @@ const ContactInfo = () => {
           <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mr-4">
             <MessageCircle className="h-6 w-6 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900">Quick Contact</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Quick Contact</h3>
         </div>
         
         <div className="space-y-4">
@@ -185,7 +185,7 @@ const ContactInfo = () => {
           <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mr-4">
             <MapPin className="h-6 w-6 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900">Find Us</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Find Us</h3>
         </div>
         <div className="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300">
           <div className="text-center">

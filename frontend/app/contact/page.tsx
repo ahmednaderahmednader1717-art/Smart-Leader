@@ -4,11 +4,11 @@ import ContactForm from '@/components/ContactForm'
 import ContactInfo from '@/components/ContactInfo'
 
 export const metadata: Metadata = {
-  title: 'Contact Us - Smart Leader',
-  description: 'Get in touch with Smart Leader. Contact our expert team for real estate inquiries, investments, or general information.',
+  title: 'Contact Us - Smart Leader Real Estate',
+  description: 'Get in touch with Smart Leader Real Estate. Contact our expert team for real estate inquiries, investments, or general information.',
   openGraph: {
-    title: 'Contact Us - Smart Leader',
-    description: 'Get in touch with Smart Leader. Contact our expert team for real estate inquiries, investments, or general information.',
+    title: 'Contact Us - Smart Leader Real Estate',
+    description: 'Get in touch with Smart Leader Real Estate. Contact our expert team for real estate inquiries, investments, or general information.',
   },
 }
 

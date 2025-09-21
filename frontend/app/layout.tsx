@@ -4,17 +4,18 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { ToastProvider } from '@/components/ToastProvider'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Smart Leader - دليلك الذكي للنجاح في العقارات',
-  description: 'دليلك الذكي للنجاح في العقارات. اكتشف العقارات الاستثنائية التي تجمع بين الفخامة والراحة والمواقع المتميزة في مصر.',
-  keywords: 'عقارات, مصر, شقق, فيلات, تجاري, فاخر, smart leader',
+  title: 'Smart Leader - Your Smart Guide to Real Estate Success',
+  description: 'Your smart guide to real estate success. Discover exceptional properties that combine luxury, comfort, and prime locations in Egypt.',
+  keywords: 'real estate, egypt, apartments, villas, commercial, luxury, smart leader',
   authors: [{ name: 'Smart Leader Real Estate' }],
   openGraph: {
-    title: 'Smart Leader - دليلك الذكي للنجاح في العقارات',
-    description: 'دليلك الذكي للنجاح في العقارات. اكتشف العقارات الاستثنائية التي تجمع بين الفخامة والراحة والمواقع المتميزة في مصر.',
+    title: 'Smart Leader - Your Smart Guide to Real Estate Success',
+    description: 'Your smart guide to real estate success. Discover exceptional properties that combine luxury, comfort, and prime locations in Egypt.',
     url: 'https://smart-leader-real-estate.vercel.app',
     siteName: 'Smart Leader Real Estate',
     images: [
@@ -30,8 +31,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Smart Leader - دليلك الذكي للنجاح في العقارات',
-    description: 'دليلك الذكي للنجاح في العقارات. اكتشف العقارات الاستثنائية التي تجمع بين الفخامة والراحة والمواقع المتميزة في مصر.',
+    title: 'Smart Leader - Your Smart Guide to Real Estate Success',
+    description: 'Your smart guide to real estate success. Discover exceptional properties that combine luxury, comfort, and prime locations in Egypt.',
     images: ['/og-image.jpg'],
   },
   robots: {
@@ -55,13 +56,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ToastProvider>
-          <Header />
-          <main className="min-h-screen">
-            {children}
-          </main>
-          <Footer />
-        </ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <Header />
+            <main className="min-h-screen">
+              {children}
+            </main>
+            <Footer />
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
