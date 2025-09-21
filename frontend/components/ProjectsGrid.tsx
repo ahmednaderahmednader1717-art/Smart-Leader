@@ -92,11 +92,11 @@ const ProjectsGrid = () => {
 
   if (loading) {
     return (
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">جاري تحميل المشاريع...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-300">جاري تحميل المشاريع...</p>
           </div>
         </div>
       </section>
@@ -104,7 +104,7 @@ const ProjectsGrid = () => {
   }
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-white dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -113,10 +113,10 @@ const ProjectsGrid = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Available Properties
           </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Browse through our current projects and find the perfect property that meets your needs and lifestyle.
           </p>
         </motion.div>
@@ -129,7 +129,7 @@ const ProjectsGrid = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+              className="bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
             >
               <div className="relative">
                 <img
@@ -138,44 +138,44 @@ const ProjectsGrid = () => {
                   className="w-full h-64 object-cover"
                 />
                 <div className="absolute top-4 right-4">
-                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-sm font-medium">
                     {project.status}
                   </span>
                 </div>
               </div>
               
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   {project.title}
                 </h3>
                 
-                <div className="flex items-center text-gray-600 mb-3">
+                <div className="flex items-center text-gray-600 dark:text-gray-300 mb-3">
                   <MapPin className="h-4 w-4 mr-2" />
                   <span className="text-sm">{project.location}</span>
                 </div>
                 
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
                   {project.description}
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-gray-600 dark:text-gray-300">
                     <Square className="h-4 w-4 mr-2" />
                     <span>{project.area}</span>
                   </div>
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-gray-600 dark:text-gray-300">
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>{project.completionDate}</span>
                   </div>
                 </div>
                 
                  <div className="flex items-center justify-between">
-                   <span className="text-lg font-semibold text-primary-600">
+                   <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
                      {project.price}
                    </span>
                   <Link
                     href={`/projects/${project.id}`}
-                    className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm group"
+                    className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
                   >
                     View Details
                     <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />

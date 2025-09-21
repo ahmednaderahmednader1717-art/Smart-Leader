@@ -14,7 +14,7 @@ import {
   createUserWithEmailAndPassword,
   signOut 
 } from 'firebase/auth';
-import { db, auth } from './firebase';
+import { db, auth, chunkArray, estimateDocumentSize } from './firebase';
 
 // Authentication Services
 export const authService = {
@@ -65,8 +65,31 @@ export const projectsService = {
       const projectsRef = collection(db, 'projects');
       const q = query(projectsRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
-      const projects = snapshot.docs.map((doc, index) => {
+      
+      const projects = await Promise.all(snapshot.docs.map(async (doc, index) => {
         const data = doc.data();
+        
+        // Get all images including chunks
+        let allImages = data.images || [];
+        
+        // If project has image chunks, fetch them
+        if (data.imageChunks && data.imageChunks > 1) {
+          try {
+            const imageChunksRef = collection(db, 'projectImages');
+            const imageChunksSnapshot = await getDocs(imageChunksRef);
+            const projectImageChunks = imageChunksSnapshot.docs
+              .filter(chunkDoc => chunkDoc.data().projectId === data.id)
+              .sort((a, b) => a.data().chunkIndex - b.data().chunkIndex);
+            
+            // Combine all image chunks
+            for (const chunkDoc of projectImageChunks) {
+              allImages = [...allImages, ...(chunkDoc.data().images || [])];
+            }
+          } catch (error) {
+            console.error('Error fetching image chunks:', error);
+          }
+        }
+        
         return {
           id: data.id || (index + 1), // Use custom ID or fallback to index
           title: data.title || '',
@@ -85,11 +108,12 @@ export const projectsService = {
             type: ''
           },
           features: data.features || [],
-          images: data.images || [],
+          images: allImages, // All images including chunks
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           views: data.views || 0
         };
-      });
+      }));
+      
       return { success: true, data: projects };
     } catch (error) {
       return { success: false, error: error.message };
@@ -117,15 +141,49 @@ export const projectsService = {
     try {
       // Generate unique ID
       const uniqueId = Date.now();
-      const docRef = await addDoc(collection(db, 'projects'), {
+      
+      // Prepare document data
+      const docData = {
         ...projectData,
         id: uniqueId, // Store custom ID
         price: projectData.price, // Keep as string
         createdAt: new Date(),
         updatedAt: new Date()
-      });
+      };
+      
+      // Check document size
+      const docSize = estimateDocumentSize(docData);
+      console.log('Document size:', docSize, 'bytes');
+      
+      // If document is too large, split images array
+      if (docSize > 800000) { // 800KB limit (less than 1MB to be safe)
+        console.log('Document too large, splitting images array');
+        
+        // Split images into chunks and store separately
+        if (projectData.images && projectData.images.length > 0) {
+          const imageChunks = chunkArray(projectData.images, 5); // 5 images per chunk
+          
+          // Store main document with first chunk
+          docData.images = imageChunks[0] || [];
+          docData.imageChunks = imageChunks.length;
+          docData.imageChunkIndex = 0;
+          
+          // Store additional chunks as separate documents
+          for (let i = 1; i < imageChunks.length; i++) {
+            await addDoc(collection(db, 'projectImages'), {
+              projectId: uniqueId,
+              chunkIndex: i,
+              images: imageChunks[i],
+              createdAt: new Date()
+            });
+          }
+        }
+      }
+      
+      const docRef = await addDoc(collection(db, 'projects'), docData);
       return { success: true, id: uniqueId };
     } catch (error) {
+      console.error('Error creating project:', error);
       return { success: false, error: error.message };
     }
   },

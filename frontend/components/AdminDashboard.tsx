@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { authService, projectsService, contactsService, adminService } from '@/lib/firebaseServices'
 import { useToastContext } from './ToastProvider'
+import ImageUpload from './ImageUpload'
 
 interface Project {
   id: number
@@ -59,6 +60,8 @@ const AdminDashboard = () => {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [showAddProject, setShowAddProject] = useState(false)
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null)
+  const [showMessageModal, setShowMessageModal] = useState(false)
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [settings, setSettings] = useState({
     companyName: 'Smart Leader Real Estate',
     email: 'info@smartleader.com',
@@ -283,26 +286,6 @@ const AdminDashboard = () => {
     }
   }
 
-  const addImage = () => {
-    setNewProject(prev => ({
-      ...prev,
-      images: [...prev.images, '']
-    }))
-  }
-
-  const removeImage = (index: number) => {
-    setNewProject(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }))
-  }
-
-  const updateImage = (index: number, value: string) => {
-    setNewProject(prev => ({
-      ...prev,
-      images: prev.images.map((img, i) => i === index ? value : img)
-    }))
-  }
 
   const addFeature = () => {
     setNewProject(prev => ({
@@ -378,6 +361,130 @@ const AdminDashboard = () => {
     }))
   }
 
+  // Contact management functions
+  const viewContact = (id: number) => {
+    const contact = contacts.find(c => c.id === id)
+    if (contact) {
+      setSelectedContact(contact)
+      setShowMessageModal(true)
+    }
+  }
+
+  // Function to format phone number with country code
+  const formatPhoneForWhatsApp = (phone: string) => {
+    // Remove all non-digit characters
+    const cleanPhone = phone.replace(/[^0-9]/g, '')
+    
+    // If phone starts with 20 (Egypt country code), return as is
+    if (cleanPhone.startsWith('20')) {
+      return cleanPhone
+    }
+    
+    // If phone starts with 0, replace with 20 (Egypt country code)
+    if (cleanPhone.startsWith('0')) {
+      return '20' + cleanPhone.substring(1)
+    }
+    
+    // If phone doesn't start with country code, add Egypt code (20)
+    if (cleanPhone.length >= 10 && !cleanPhone.startsWith('20')) {
+      return '20' + cleanPhone
+    }
+    
+    // Return as is if already formatted
+    return cleanPhone
+  }
+
+  // Function to get email provider and create appropriate link
+  const getEmailLink = (email: string, name: string) => {
+    const emailDomain = email.split('@')[1]?.toLowerCase()
+    
+    // Create simple email template
+    const createEmailBody = (name: string) => {
+      return `Dear ${name},
+
+Thank you for contacting Smart Leader Real Estate.
+
+We have received your message and will get back to you soon.
+
+Best regards,
+Smart Leader Team`
+    }
+    
+    // Gmail
+    if (emailDomain === 'gmail.com') {
+      return {
+        href: `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=Re: Your Inquiry&body=${encodeURIComponent(createEmailBody(name))}`,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        title: `Open Gmail to send email to ${email}`,
+        icon: 'gmail'
+      }
+    }
+    
+    // Outlook/Hotmail
+    if (emailDomain === 'outlook.com' || emailDomain === 'hotmail.com' || emailDomain === 'live.com') {
+      return {
+        href: `https://outlook.live.com/mail/0/deeplink/compose?to=${email}&subject=${encodeURIComponent('Re: Your Inquiry')}&body=${encodeURIComponent(createEmailBody(name))}`,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        title: `Open Outlook to send email to ${email}`,
+        icon: 'outlook'
+      }
+    }
+    
+    // Yahoo
+    if (emailDomain === 'yahoo.com' || emailDomain === 'yahoo.co.uk' || emailDomain === 'ymail.com') {
+      return {
+        href: `https://compose.mail.yahoo.com/?to=${email}&subject=${encodeURIComponent('Re: Your Inquiry')}&body=${encodeURIComponent(createEmailBody(name))}`,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        title: `Open Yahoo Mail to send email to ${email}`,
+        icon: 'yahoo'
+      }
+    }
+    
+    // Default mailto for other providers
+    return {
+      href: `mailto:${email}?subject=Re: Your Inquiry&body=${encodeURIComponent(createEmailBody(name))}`,
+      target: '_self',
+      rel: '',
+      title: `Send email to ${email}`,
+      icon: 'email'
+    }
+  }
+
+  const markAsRead = async (id: number) => {
+    try {
+      const result = await contactsService.updateContactStatus(id, 'Read')
+      if (result.success) {
+        await loadDashboardData() // Reload contacts
+        success('Status Updated!', 'Contact marked as read')
+      } else {
+        error('Update Failed', result.error || 'Failed to update status')
+      }
+    } catch (err) {
+      console.error('Error updating contact status:', err)
+      error('Update Error', 'Please try again')
+    }
+  }
+
+  const deleteContact = async (id: number) => {
+    if (confirm('Are you sure you want to delete this contact message?')) {
+      try {
+        const result = await contactsService.deleteContact(id)
+        if (result.success) {
+          await loadDashboardData() // Reload contacts
+          success('Contact Deleted!', 'Contact message removed')
+        } else {
+          error('Delete Failed', result.error || 'Failed to delete contact')
+        }
+      } catch (err) {
+        console.error('Error deleting contact:', err)
+        error('Delete Error', 'Please try again')
+      }
+    }
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -432,18 +539,18 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Lightbulb className="h-8 w-8 text-blue-600" />
-              <h1 className="text-xl font-bold text-gray-900">Smart Leader Dashboard</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Smart Leader Dashboard</h1>
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               <LogOut className="h-5 w-5" />
               <span>Logout</span>
@@ -467,7 +574,7 @@ const AdminDashboard = () => {
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               <tab.icon className="h-5 w-5" />
@@ -481,77 +588,77 @@ const AdminDashboard = () => {
           <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">إجمالي المشاريع</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.projects.total}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Projects</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.projects.total}</p>
                   </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">المشاريع المتاحة</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.projects.available}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Available Projects</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.projects.available}</p>
                   </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">إجمالي الرسائل</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.contacts.total}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Messages</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.contacts.total}</p>
                   </div>
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <MessageSquare className="h-6 w-6 text-purple-600" />
+                  <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                    <MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">الرسائل الجديدة</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.contacts.new}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">New Messages</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.contacts.new}</p>
                   </div>
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Users className="h-6 w-6 text-orange-600" />
+                  <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                    <Users className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Recent Projects */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">أحدث المشاريع</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Projects</h2>
               <div className="space-y-4">
                 {projects.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">لا توجد مشاريع بعد</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No projects yet</p>
                 ) : (
                   projects.slice(0, 3).map((project) => (
-                    <div key={project.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div key={project.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                       <div>
-                        <h3 className="font-medium text-gray-900">{project.title}</h3>
-                        <p className="text-sm text-gray-600">{project.location}</p>
+                        <h3 className="font-medium text-gray-900 dark:text-white">{project.title}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{project.location}</p>
                       </div>
                       <div className="flex items-center space-x-4">
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                           project.status === 'Available' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-blue-100 text-blue-800'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' 
+                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
                         }`}>
-                          {project.status === 'Available' ? 'متاح' : 'تحت الإنشاء'}
+                          {project.status === 'Available' ? 'Available' : 'Under Construction'}
                         </span>
-                        <span className="text-sm text-gray-500">{project.views} مشاهدة</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">{project.views} views</span>
                       </div>
                     </div>
                   ))
@@ -560,27 +667,27 @@ const AdminDashboard = () => {
             </div>
 
             {/* Recent Contacts */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">أحدث الرسائل</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Messages</h2>
               <div className="space-y-4">
                 {contacts.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">لا توجد رسائل بعد</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No messages yet</p>
                 ) : (
                   contacts.slice(0, 3).map((contact) => (
-                    <div key={contact.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div key={contact.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                       <div>
-                        <h3 className="font-medium text-gray-900">{contact.name}</h3>
-                        <p className="text-sm text-gray-600">{contact.email}</p>
+                        <h3 className="font-medium text-gray-900 dark:text-white">{contact.name}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{contact.email}</p>
                       </div>
                       <div className="flex items-center space-x-4">
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                           contact.status === 'New' 
-                            ? 'bg-orange-100 text-orange-800' 
-                            : 'bg-green-100 text-green-800'
+                            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400' 
+                            : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
                         }`}>
-                          {contact.status === 'New' ? 'جديد' : 'تم الرد'}
+                          {contact.status === 'New' ? 'New' : 'Replied'}
                         </span>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
                           {new Date(contact.createdAt).toLocaleDateString('ar-EG')}
                         </span>
                       </div>
@@ -598,10 +705,10 @@ const AdminDashboard = () => {
             {/* Add Project Modal */}
             {showAddProject && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {editingProjectId ? 'تعديل المشروع' : 'إضافة مشروع جديد'}
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {editingProjectId ? 'Edit Project' : 'Add New Project'}
                     </h2>
                     <button 
                       onClick={() => {
@@ -617,7 +724,7 @@ const AdminDashboard = () => {
                   <form onSubmit={handleAddProject} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           عنوان المشروع *
                         </label>
                         <input
@@ -625,13 +732,13 @@ const AdminDashboard = () => {
                           required
                           value={newProject.title}
                           onChange={(e) => setNewProject(prev => ({ ...prev, title: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: شقق فاخرة في التجمع الخامس"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           الموقع *
                         </label>
                         <input
@@ -639,13 +746,13 @@ const AdminDashboard = () => {
                           required
                           value={newProject.location}
                           onChange={(e) => setNewProject(prev => ({ ...prev, location: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: التجمع الخامس، القاهرة"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           السعر *
                         </label>
                         <input
@@ -653,13 +760,13 @@ const AdminDashboard = () => {
                           required
                           value={newProject.price}
                           onChange={(e) => setNewProject(prev => ({ ...prev, price: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: بداية من 2,500,000 جنيه"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           المساحة *
                         </label>
                         <input
@@ -667,13 +774,13 @@ const AdminDashboard = () => {
                           required
                           value={newProject.area}
                           onChange={(e) => setNewProject(prev => ({ ...prev, area: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: 120-200 متر مربع"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           تاريخ الإنجاز *
                         </label>
                         <input
@@ -681,19 +788,19 @@ const AdminDashboard = () => {
                           required
                           value={newProject.completionDate}
                           onChange={(e) => setNewProject(prev => ({ ...prev, completionDate: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: Q2 2025"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           الحالة
                         </label>
                         <select
                           value={newProject.status}
                           onChange={(e) => setNewProject(prev => ({ ...prev, status: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         >
                           <option value="Available">متاح</option>
                           <option value="Completed">مكتمل</option>
@@ -704,7 +811,7 @@ const AdminDashboard = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         الوصف المختصر *
                       </label>
                       <textarea
@@ -712,13 +819,13 @@ const AdminDashboard = () => {
                         rows={3}
                         value={newProject.description}
                         onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         placeholder="وصف مختصر للمشروع..."
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         الوصف التفصيلي *
                       </label>
                       <textarea
@@ -726,14 +833,14 @@ const AdminDashboard = () => {
                         rows={4}
                         value={newProject.longDescription}
                         onChange={(e) => setNewProject(prev => ({ ...prev, longDescription: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         placeholder="وصف تفصيلي للمشروع..."
                       />
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           عدد الغرف
                         </label>
                         <input
@@ -743,13 +850,13 @@ const AdminDashboard = () => {
                             ...prev, 
                             specifications: { ...prev.specifications, bedrooms: e.target.value }
                           }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: 2-3"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           عدد الحمامات
                         </label>
                         <input
@@ -759,13 +866,13 @@ const AdminDashboard = () => {
                             ...prev, 
                             specifications: { ...prev.specifications, bathrooms: e.target.value }
                           }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: 2-3"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           موقف السيارات
                         </label>
                         <input
@@ -775,13 +882,13 @@ const AdminDashboard = () => {
                             ...prev, 
                             specifications: { ...prev.specifications, parking: e.target.value }
                           }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: 1-2"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           الطابق
                         </label>
                         <input
@@ -791,13 +898,13 @@ const AdminDashboard = () => {
                             ...prev, 
                             specifications: { ...prev.specifications, floor: e.target.value }
                           }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: 3-15"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           نوع العقار
                         </label>
                         <input
@@ -807,46 +914,20 @@ const AdminDashboard = () => {
                             ...prev, 
                             specifications: { ...prev.specifications, type: e.target.value }
                           }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="مثال: شقة"
                         />
                       </div>
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        الصور *
-                      </label>
-                      {newProject.images.map((image, index) => (
-                        <div key={index} className="flex items-center space-x-2 mb-2">
-                          <input
-                            type="url"
-                            required
-                            value={image}
-                            onChange={(e) => updateImage(index, e.target.value)}
-                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                            placeholder="مثال: https://example.com/image.jpg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="px-3 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addImage}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                      >
-                        + إضافة صورة
-                      </button>
-                    </div>
+                    <ImageUpload
+                      images={newProject.images}
+                      onImagesChange={(images) => setNewProject(prev => ({ ...prev, images }))}
+                      maxImages={10}
+                    />
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         المميزات *
                       </label>
                       {newProject.features.map((feature, index) => (
@@ -856,7 +937,7 @@ const AdminDashboard = () => {
                             required
                             value={feature}
                             onChange={(e) => updateFeature(index, e.target.value)}
-                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                            className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             placeholder="مثال: تشطيب فاخر"
                           />
                           <button
@@ -871,7 +952,7 @@ const AdminDashboard = () => {
                       <button
                         type="button"
                         onClick={addFeature}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
                       >
                         + إضافة ميزة
                       </button>
@@ -884,7 +965,7 @@ const AdminDashboard = () => {
                           setShowAddProject(false)
                           setEditingProjectId(null)
                         }}
-                        className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                        className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
                         إلغاء
                       </button>
@@ -900,9 +981,9 @@ const AdminDashboard = () => {
               </div>
             )}
             
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">قائمة المشاريع</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">قائمة المشاريع</h2>
                 <button 
                   onClick={() => setShowAddProject(true)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
@@ -915,24 +996,24 @@ const AdminDashboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4">العنوان</th>
-                      <th className="text-left py-3 px-4">الحالة</th>
-                      <th className="text-left py-3 px-4">المشاهدات</th>
-                      <th className="text-left py-3 px-4">الإجراءات</th>
+                    <tr className="border-b dark:border-gray-700">
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">العنوان</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الحالة</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">المشاهدات</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
                     {projects.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="text-center py-8 text-gray-500">
+                        <td colSpan={4} className="text-center py-8 text-gray-500 dark:text-gray-400">
                           لا توجد مشاريع بعد
                         </td>
                       </tr>
                     ) : (
                       projects.map((project) => (
-                        <tr key={project.id} className="border-b">
-                          <td className="py-3 px-4">{project.title}</td>
+                        <tr key={project.id} className="border-b dark:border-gray-700">
+                          <td className="py-3 px-4 text-gray-900 dark:text-white">{project.title}</td>
                           <td className="py-3 px-4">
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                               project.status === 'Available' 
@@ -947,7 +1028,7 @@ const AdminDashboard = () => {
                                project.status === 'Coming Soon' ? 'قريباً' : project.status}
                             </span>
                           </td>
-                          <td className="py-3 px-4">{project.views}</td>
+                          <td className="py-3 px-4 text-gray-900 dark:text-white">{project.views}</td>
                           <td className="py-3 px-4">
                             <div className="flex space-x-2">
                               <button 
@@ -978,32 +1059,32 @@ const AdminDashboard = () => {
 
         {/* Contacts Tab */}
         {activeTab === 'contacts' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">إدارة الرسائل</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">إدارة الرسائل</h2>
             
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4">الاسم</th>
-                    <th className="text-left py-3 px-4">البريد الإلكتروني</th>
-                    <th className="text-left py-3 px-4">الحالة</th>
-                    <th className="text-left py-3 px-4">التاريخ</th>
-                    <th className="text-left py-3 px-4">الإجراءات</th>
+                  <tr className="border-b dark:border-gray-700">
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الاسم</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">البريد الإلكتروني</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الحالة</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">التاريخ</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
                   {contacts.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="text-center py-8 text-gray-500">
+                      <td colSpan={5} className="text-center py-8 text-gray-500 dark:text-gray-400">
                         لا توجد رسائل بعد
                       </td>
                     </tr>
                   ) : (
                     contacts.map((contact) => (
-                      <tr key={contact.id} className="border-b">
-                        <td className="py-3 px-4">{contact.name}</td>
-                        <td className="py-3 px-4">{contact.email}</td>
+                      <tr key={contact.id} className="border-b dark:border-gray-700">
+                        <td className="py-3 px-4 text-gray-900 dark:text-white">{contact.name}</td>
+                        <td className="py-3 px-4 text-gray-900 dark:text-white">{contact.email}</td>
                         <td className="py-3 px-4">
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                             contact.status === 'New' 
@@ -1018,11 +1099,26 @@ const AdminDashboard = () => {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex space-x-2">
-                            <button className="text-blue-600 hover:text-blue-700">
+                            <button 
+                              onClick={() => viewContact(contact.id)}
+                              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                              title="View Message"
+                            >
                               <Eye className="h-4 w-4" />
                             </button>
-                            <button className="text-green-600 hover:text-green-700">
+                            <button 
+                              onClick={() => markAsRead(contact.id)}
+                              className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                              title="Mark as Read"
+                            >
                               <Edit className="h-4 w-4" />
+                            </button>
+                            <button 
+                              onClick={() => deleteContact(contact.id)}
+                              className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                              title="Delete Message"
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -1037,7 +1133,7 @@ const AdminDashboard = () => {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">System Settings</h2>
             
             <form onSubmit={handleSaveSettings} className="space-y-6">
@@ -1087,6 +1183,182 @@ const AdminDashboard = () => {
                 Save Settings
               </button>
             </form>
+          </div>
+        )}
+
+        {/* Message Modal */}
+        {showMessageModal && selectedContact && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Message Details</h2>
+                <button 
+                  onClick={() => {
+                    setShowMessageModal(false)
+                    setSelectedContact(null)
+                  }}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Contact Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Full Name
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white break-words">
+                      {selectedContact.name}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white break-all text-sm">
+                      {(() => {
+                        const emailLink = getEmailLink(selectedContact.email, selectedContact.name)
+                        return (
+                          <a 
+                            href={emailLink.href}
+                            target={emailLink.target}
+                            rel={emailLink.rel}
+                            className="text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-2"
+                            title={emailLink.title}
+                          >
+                            <span>{selectedContact.email}</span>
+                            {emailLink.icon === 'gmail' && (
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.904.732-1.636 1.636-1.636h3.819l6.545 4.91 6.545-4.91h3.819c.904 0 1.636.732 1.636 1.636z"/>
+                              </svg>
+                            )}
+                            {emailLink.icon === 'outlook' && (
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.462 12.5L2.5 7.538h4.962V12.5zm0-5L2.5 2.538h4.962V7.5zm5 0L7.5 2.538h4.962V7.5zm0 5L7.5 7.538h4.962V12.5zm5 0L12.5 7.538h4.962V12.5zm0-5L12.5 2.538h4.962V7.5z"/>
+                              </svg>
+                            )}
+                            {emailLink.icon === 'yahoo' && (
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 20c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
+                              </svg>
+                            )}
+                            {emailLink.icon === 'email' && (
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                              </svg>
+                            )}
+                          </a>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Phone Number
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white break-words">
+                      {selectedContact.phone ? (
+                        <a 
+                          href={`https://wa.me/${formatPhoneForWhatsApp(selectedContact.phone)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-600 dark:text-green-400 hover:underline flex items-center space-x-2"
+                          title={`Open WhatsApp chat with ${formatPhoneForWhatsApp(selectedContact.phone)}`}
+                        >
+                          <span>{selectedContact.phone}</span>
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                          </svg>
+                        </a>
+                      ) : (
+                        <span className="text-gray-500 dark:text-gray-400">Not provided</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Status
+                    </label>
+                    <div className="px-4 py-3">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedContact.status === 'New' 
+                          ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' 
+                          : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      }`}>
+                        {selectedContact.status === 'New' ? 'New Message' : 'Read'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Message Content */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Message
+                  </label>
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white min-h-[120px] whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                    {selectedContact.message}
+                  </div>
+                </div>
+                
+                {/* Date */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Received Date
+                  </label>
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white break-words">
+                    {new Date(selectedContact.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 mt-8">
+                <button
+                  onClick={() => {
+                    setShowMessageModal(false)
+                    setSelectedContact(null)
+                  }}
+                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Close
+                </button>
+                {selectedContact.status === 'New' && (
+                  <button
+                    onClick={() => {
+                      markAsRead(selectedContact.id)
+                      setShowMessageModal(false)
+                      setSelectedContact(null)
+                    }}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Mark as Read
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    deleteContact(selectedContact.id)
+                    setShowMessageModal(false)
+                    setSelectedContact(null)
+                  }}
+                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Delete Message
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

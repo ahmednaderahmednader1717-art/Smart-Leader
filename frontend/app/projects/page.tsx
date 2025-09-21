@@ -3,11 +3,11 @@ import ProjectsHero from '@/components/ProjectsHero'
 import ProjectsGrid from '@/components/ProjectsGrid'
 
 export const metadata: Metadata = {
-  title: 'المشاريع الحالية - Smart Leader',
-  description: 'استكشف مشاريعنا العقارية الحالية في مصر. شقق فاخرة وفيلات وعقارات تجارية متاحة الآن.',
+  title: 'Current Projects - Smart Leader',
+  description: 'Explore our current real estate projects in Egypt. Luxury apartments, villas, and commercial properties available now.',
   openGraph: {
-    title: 'المشاريع الحالية - Smart Leader',
-    description: 'استكشف مشاريعنا العقارية الحالية في مصر. شقق فاخرة وفيلات وعقارات تجارية متاحة الآن.',
+    title: 'Current Projects - Smart Leader',
+    description: 'Explore our current real estate projects in Egypt. Luxury apartments, villas, and commercial properties available now.',
   },
 }
 

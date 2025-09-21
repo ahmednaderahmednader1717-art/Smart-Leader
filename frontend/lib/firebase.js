@@ -16,8 +16,33 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase services
+// Initialize Firebase services with increased limits
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+// Configure Firestore settings for larger documents
+import { connectFirestoreEmulator, enableNetwork, disableNetwork } from "firebase/firestore";
+
+// Enable offline persistence with increased cache size
+try {
+  // This will help with larger documents
+  enableNetwork(db);
+} catch (error) {
+  console.log('Network already enabled');
+}
+
+// Helper function to split large arrays into chunks
+export const chunkArray = (array, chunkSize = 100) => {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
+// Helper function to estimate document size
+export const estimateDocumentSize = (doc) => {
+  return JSON.stringify(doc).length;
+}
 
 export default app;

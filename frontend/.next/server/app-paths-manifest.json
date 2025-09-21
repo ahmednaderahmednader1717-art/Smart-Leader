@@ -1,12 +1,7 @@
 {
-  "/_not-found": "app/_not-found.js",
-  "/page": "app/page.js",
-  "/projects/[id]/page": "app/projects/[id]/page.js",
-  "/api/contact/route": "app/api/contact/route.js",
   "/admin/page": "app/admin/page.js",
-  "/about/page": "app/about/page.js",
   "/previous-projects/page": "app/previous-projects/page.js",
   "/contact/page": "app/contact/page.js",
   "/projects/page": "app/projects/page.js",
-  "/services/page": "app/services/page.js"
+  "/projects/[id]/page": "app/projects/[id]/page.js"
 }

@@ -32,7 +32,7 @@ const CompanyHistory = () => {
   ]
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-white dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -41,10 +41,10 @@ const CompanyHistory = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Our Journey
           </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             From humble beginnings to becoming a leading real estate developer, 
             our journey has been marked by continuous growth, innovation, and excellence.
           </p>
@@ -52,7 +52,7 @@ const CompanyHistory = () => {
 
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-primary-200"></div>
+          <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-primary-200 dark:bg-primary-800"></div>
           
           <div className="space-y-12">
             {milestones.map((milestone, index) => (
@@ -67,24 +67,24 @@ const CompanyHistory = () => {
                 }`}
               >
                 <div className={`w-1/2 ${index % 2 === 0 ? 'pr-8 text-right' : 'pl-8 text-left'}`}>
-                  <div className="bg-white p-6 rounded-lg shadow-lg">
+                  <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-lg">
                     <div className="flex items-center space-x-3 mb-3">
-                      <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                        <milestone.icon className="h-5 w-5 text-primary-600" />
+                      <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                        <milestone.icon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
                       </div>
-                      <span className="text-2xl font-bold text-primary-600">{milestone.year}</span>
+                      <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">{milestone.year}</span>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       {milestone.title}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-300">
                       {milestone.description}
                     </p>
                   </div>
                 </div>
                 
                 {/* Timeline dot */}
-                <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-primary-600 rounded-full border-4 border-white shadow-lg"></div>
+                <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-primary-600 dark:bg-primary-400 rounded-full border-4 border-white dark:border-gray-800 shadow-lg"></div>
                 
                 <div className="w-1/2"></div>
               </motion.div>

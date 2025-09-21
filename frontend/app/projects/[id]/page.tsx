@@ -13,10 +13,10 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   
   return {
     title: projectTitle,
-    description: 'عرض معلومات مفصلة عن هذا المشروع العقاري المتميز.',
+    description: 'View detailed information about this exceptional real estate project.',
     openGraph: {
       title: projectTitle,
-      description: 'عرض معلومات مفصلة عن هذا المشروع العقاري المتميز.',
+      description: 'View detailed information about this exceptional real estate project.',
     },
   }
 }

@@ -6,7 +6,7 @@ import { Phone, Mail, MessageCircle } from 'lucide-react'
 
 const ContactCTA = () => {
   return (
-    <section className="py-20 bg-primary-600">
+    <section className="py-20 bg-primary-600 dark:bg-primary-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -18,7 +18,7 @@ const ContactCTA = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             هل أنت مستعد للعثور على عقارك المثالي؟
           </h2>
-          <p className="text-xl text-blue-100 mb-12 max-w-3xl mx-auto">
+          <p className="text-xl text-blue-100 dark:text-blue-200 mb-12 max-w-3xl mx-auto">
             تواصل مع فريقنا الخبير اليوم. نحن هنا لمساعدتك في العثور على 
             العقار المثالي الذي يلبي احتياجاتك ويتجاوز توقعاتك.
           </p>
@@ -35,7 +35,7 @@ const ContactCTA = () => {
                 <Phone className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">اتصل بنا</h3>
-              <p className="text-blue-100">+20 123 456 7890</p>
+              <p className="text-blue-100 dark:text-blue-200">+20 123 456 7890</p>
             </motion.div>
 
             <motion.div
@@ -49,7 +49,7 @@ const ContactCTA = () => {
                 <Mail className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">راسلنا</h3>
-              <p className="text-blue-100">info@smartleader.com</p>
+              <p className="text-blue-100 dark:text-blue-200">info@smartleader.com</p>
             </motion.div>
 
             <motion.div
@@ -62,8 +62,8 @@ const ContactCTA = () => {
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MessageCircle className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">محادثة مباشرة</h3>
-              <p className="text-blue-100">متاح 24/7</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Live Chat</h3>
+              <p className="text-blue-100 dark:text-blue-200">Available 24/7</p>
             </motion.div>
           </div>
 
@@ -76,15 +76,15 @@ const ContactCTA = () => {
           >
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-700 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-200 transition-colors"
             >
-              تواصل معنا الآن
+              Contact Us Now
             </Link>
             <Link
               href="/projects"
-              className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-colors"
+              className="inline-flex items-center justify-center px-8 py-4 border-2 border-white dark:border-gray-200 text-white dark:text-gray-200 font-semibold rounded-lg hover:bg-white dark:hover:bg-gray-200 hover:text-blue-600 dark:hover:text-blue-700 transition-colors"
             >
-              تصفح العقارات
+              Browse Properties
             </Link>
           </motion.div>
         </motion.div>

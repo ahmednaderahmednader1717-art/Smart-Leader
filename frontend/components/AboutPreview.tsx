@@ -24,7 +24,7 @@ const AboutPreview = () => {
   ]
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Content */}
@@ -36,18 +36,18 @@ const AboutPreview = () => {
             className="space-y-8"
           >
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                من نحن - Smart Leader
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                About Us - Smart Leader
               </h2>
-              <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                مع أكثر من 15 عاماً من الخبرة في السوق العقاري المصري، 
-                أصبح Smart Leader اسماً موثوقاً في تطوير العقارات المتميزة. 
-                نتخصص في إنشاء مساحات معيشية وتجارية استثنائية تجمع بين 
-                التصميم العصري والوظائف العملية.
+              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+                With over 15 years of experience in the Egyptian real estate market, 
+                Smart Leader has become a trusted name in developing exceptional properties. 
+                We specialize in creating exceptional residential and commercial spaces that combine 
+                modern design with practical functionality.
               </p>
-              <p className="text-gray-600 leading-relaxed">
-                التزامنا بالجودة والابتكار ورضا العملاء جعلنا 
-                الخيار المفضل للعملاء المميزين الذين يبحثون عن أفضل العقارات في مصر.
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                Our commitment to quality, innovation, and customer satisfaction has made us 
+                the preferred choice for discerning clients seeking the best properties in Egypt.
               </p>
             </div>
 
@@ -62,14 +62,14 @@ const AboutPreview = () => {
                   viewport={{ once: true }}
                   className="flex items-start space-x-4"
                 >
-                  <div className="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <value.icon className="h-6 w-6 text-primary-600" />
+                  <div className="flex-shrink-0 w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
+                    <value.icon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                       {value.title}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-300">
                       {value.description}
                     </p>
                   </div>
