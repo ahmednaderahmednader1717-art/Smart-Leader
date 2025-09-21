@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Lightbulb } from 'lucide-react'
+import { Menu, X, Lightbulb, Settings } from 'lucide-react'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -15,6 +15,7 @@ const Header = () => {
     { name: 'Projects', href: '/projects' },
     { name: 'Previous Projects', href: '/previous-projects' },
     { name: 'Contact', href: '/contact' },
+    { name: 'Admin', href: '/admin' },
   ]
 
   const isActive = (href: string) => pathname === href
@@ -41,13 +42,14 @@ const Header = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1 ${
                   isActive(item.href)
                     ? 'text-primary-600 bg-primary-50'
                     : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
                 }`}
               >
-                {item.name}
+                {item.name === 'Admin' && <Settings className="h-4 w-4" />}
+                <span>{item.name}</span>
               </Link>
             ))}
           </nav>
@@ -85,14 +87,15 @@ const Header = () => {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors flex items-center space-x-2 ${
                     isActive(item.href)
                       ? 'text-primary-600 bg-primary-50'
                       : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  {item.name}
+                  {item.name === 'Admin' && <Settings className="h-4 w-4" />}
+                  <span>{item.name}</span>
                 </Link>
               ))}
               <Link
