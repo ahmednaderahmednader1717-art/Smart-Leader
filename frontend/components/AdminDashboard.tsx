@@ -16,6 +16,7 @@ import {
   BarChart3
 } from 'lucide-react'
 import { authService, projectsService, contactsService, adminService } from '@/lib/firebaseServices'
+import { useToastContext } from './ToastProvider'
 
 interface Project {
   id: number
@@ -51,6 +52,7 @@ interface Contact {
 }
 
 const AdminDashboard = () => {
+  const { success, error, warning, info } = useToastContext()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [projects, setProjects] = useState<Project[]>([])
@@ -208,10 +210,10 @@ const AdminDashboard = () => {
         return
       }
 
-      alert('خطأ في تسجيل الدخول - تحقق من البيانات')
-    } catch (error) {
-      console.error('Login error:', error)
-      alert('خطأ في الاتصال بالخادم')
+      error('خطأ في تسجيل الدخول', 'تحقق من البيانات المدخلة')
+    } catch (err) {
+      console.error('Login error:', err)
+      error('خطأ في الاتصال', 'تحقق من اتصال الإنترنت')
     }
   }
 
@@ -266,13 +268,13 @@ const AdminDashboard = () => {
         setEditingProjectId(null)
         setShowAddProject(false)
         
-        alert(editingProjectId ? 'تم تحديث المشروع بنجاح!' : 'تم إضافة المشروع بنجاح!')
+        success(editingProjectId ? 'تم تحديث المشروع بنجاح!' : 'تم إضافة المشروع بنجاح!', 'تم حفظ التغييرات في قاعدة البيانات')
       } else {
-        alert('فشل العملية: ' + result.error)
+        error('فشل العملية', result.error || 'حدث خطأ غير متوقع')
       }
-    } catch (error) {
-      console.error('Error:', error)
-      alert('حدث خطأ في العملية')
+    } catch (err) {
+      console.error('Error:', err)
+      error('حدث خطأ في العملية', 'يرجى المحاولة مرة أخرى')
     }
   }
 
@@ -325,13 +327,13 @@ const AdminDashboard = () => {
         if (result.success) {
           // Reload projects from Firebase
           await loadDashboardData()
-          alert('تم حذف المشروع بنجاح!')
+          success('تم حذف المشروع بنجاح!', 'تم حذف المشروع من قاعدة البيانات')
         } else {
-          alert('فشل حذف المشروع: ' + result.error)
+          error('فشل حذف المشروع', result.error || 'حدث خطأ غير متوقع')
         }
-      } catch (error) {
-        console.error('Error deleting project:', error)
-        alert('حدث خطأ في حذف المشروع')
+      } catch (err) {
+        console.error('Error deleting project:', err)
+        error('حدث خطأ في حذف المشروع', 'يرجى المحاولة مرة أخرى')
       }
     }
   }
