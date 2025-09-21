@@ -98,15 +98,15 @@ const AdminDashboard = () => {
         adminService.getStats()
       ])
 
-      if (projectsResult.status === 'fulfilled' && projectsResult.value.success) {
+      if (projectsResult.status === 'fulfilled' && projectsResult.value.success && projectsResult.value.data) {
         setProjects(projectsResult.value.data)
       }
 
-      if (contactsResult.status === 'fulfilled' && contactsResult.value.success) {
+      if (contactsResult.status === 'fulfilled' && contactsResult.value.success && contactsResult.value.data) {
         setContacts(contactsResult.value.data)
       }
 
-      if (statsResult.status === 'fulfilled' && statsResult.value.success) {
+      if (statsResult.status === 'fulfilled' && statsResult.value.success && statsResult.value.data) {
         setStats(statsResult.value.data)
       }
     } catch (error) {

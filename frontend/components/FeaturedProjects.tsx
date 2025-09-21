@@ -14,7 +14,7 @@ const FeaturedProjects = () => {
     const loadProjects = async () => {
       try {
         const result = await projectsService.getProjects()
-        if (result.success) {
+        if (result.success && result.data) {
           setProjects(result.data.slice(0, 3)) // Show only first 3 projects
         } else {
           // Fallback to mock data

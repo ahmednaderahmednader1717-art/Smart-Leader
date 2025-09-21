@@ -14,7 +14,7 @@ const ProjectsGrid = () => {
     const loadProjects = async () => {
       try {
         const result = await projectsService.getProjects()
-        if (result.success) {
+        if (result.success && result.data) {
           setProjects(result.data)
         } else {
           // Fallback to mock data
