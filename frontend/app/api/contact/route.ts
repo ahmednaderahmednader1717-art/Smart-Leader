@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { contactsService } from '@/lib/firebaseServices'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,42 +14,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Forward to backend API
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-    
-    try {
-      const response = await fetch(`${backendUrl}/api/contacts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          message
-        })
-      })
+    // Submit to Firebase
+    const result = await contactsService.submitContact({
+      name,
+      email,
+      phone: phone || null,
+      message
+    })
 
-      if (!response.ok) {
-        throw new Error(`Backend API error: ${response.status}`)
-      }
-
-      const result = await response.json()
-      
+    if (result.success) {
       return NextResponse.json(
         { message: 'Contact form submitted successfully' },
         { status: 200 }
       )
-    } catch (backendError) {
-      console.error('Backend API error:', backendError)
-      
-      // Fallback: log the contact form submission
-      console.log('Contact form submission (fallback):', { name, email, phone, message })
-      
+    } else {
       return NextResponse.json(
-        { message: 'Contact form submitted successfully' },
-        { status: 200 }
+        { message: result.error || 'Failed to submit contact form' },
+        { status: 500 }
       )
     }
   } catch (error) {

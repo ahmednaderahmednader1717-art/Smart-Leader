@@ -3,37 +3,72 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight, MapPin, Calendar } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { projectsService } from '@/lib/firebaseServices'
 
 const FeaturedProjects = () => {
-  const projects = [
-    {
-      id: 1,
-      title: 'Luxury Apartments in New Cairo',
-      location: 'New Cairo, Egypt',
-      image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      status: 'Available',
-      price: 'Starting from $150,000',
-      description: 'Modern luxury apartments with premium amenities and stunning city views.',
-    },
-    {
-      id: 2,
-      title: 'Villa Complex in North Coast',
-      location: 'North Coast, Egypt',
-      image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      status: 'Available',
-      price: 'Starting from $200,000',
-      description: 'Exclusive beachfront villas with private pools and direct beach access.',
-    },
-    {
-      id: 3,
-      title: 'Commercial Tower in Downtown',
-      location: 'Downtown Cairo, Egypt',
-      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      status: 'Completed',
-      price: 'Contact for pricing',
-      description: 'State-of-the-art commercial tower with modern office spaces.',
-    },
-  ]
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const result = await projectsService.getProjects()
+        if (result.success) {
+          setProjects(result.data.slice(0, 3)) // Show only first 3 projects
+        } else {
+          // Fallback to mock data
+          setProjects([
+            {
+              id: 1,
+              title: 'Luxury Apartments in New Cairo',
+              location: 'New Cairo, Egypt',
+              image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+              status: 'Available',
+              price: 'Starting from $150,000',
+              description: 'Modern luxury apartments with premium amenities and stunning city views.',
+            },
+            {
+              id: 2,
+              title: 'Villa Complex in North Coast',
+              location: 'North Coast, Egypt',
+              image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+              status: 'Available',
+              price: 'Starting from $200,000',
+              description: 'Exclusive beachfront villas with private pools and direct beach access.',
+            },
+            {
+              id: 3,
+              title: 'Commercial Tower in Downtown',
+              location: 'Downtown Cairo, Egypt',
+              image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+              status: 'Completed',
+              price: 'Contact for pricing',
+              description: 'State-of-the-art commercial tower with modern office spaces.',
+            }
+          ])
+        }
+      } catch (error) {
+        console.error('Error loading projects:', error)
+        // Use mock data as fallback
+        setProjects([
+          {
+            id: 1,
+            title: 'Luxury Apartments in New Cairo',
+            location: 'New Cairo, Egypt',
+            image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+            status: 'Available',
+            price: 'Starting from $150,000',
+            description: 'Modern luxury apartments with premium amenities and stunning city views.',
+          }
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProjects()
+  }, [])
 
   return (
     <section className="py-20 bg-white">

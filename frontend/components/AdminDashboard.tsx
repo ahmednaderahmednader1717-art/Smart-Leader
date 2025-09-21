@@ -15,6 +15,7 @@ import {
   Settings,
   BarChart3
 } from 'lucide-react'
+import { authService, projectsService, contactsService, adminService } from '@/lib/firebaseServices'
 
 interface Project {
   id: number
@@ -89,36 +90,24 @@ const AdminDashboard = () => {
   }, [])
 
   const loadDashboardData = async () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-    const token = localStorage.getItem('adminToken')
-    
     try {
-      // Try to load real data from API
-      const [projectsResponse, contactsResponse, statsResponse] = await Promise.allSettled([
-        fetch(`${apiUrl}/api/projects`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${apiUrl}/api/contacts`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${apiUrl}/api/admin/dashboard`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+      // Load data from Firebase
+      const [projectsResult, contactsResult, statsResult] = await Promise.allSettled([
+        projectsService.getProjects(),
+        contactsService.getContacts(),
+        adminService.getStats()
       ])
 
-      if (projectsResponse.status === 'fulfilled' && projectsResponse.value.ok) {
-        const projectsData = await projectsResponse.value.json()
-        setProjects(projectsData)
+      if (projectsResult.status === 'fulfilled' && projectsResult.value.success) {
+        setProjects(projectsResult.value.data)
       }
 
-      if (contactsResponse.status === 'fulfilled' && contactsResponse.value.ok) {
-        const contactsData = await contactsResponse.value.json()
-        setContacts(contactsData)
+      if (contactsResult.status === 'fulfilled' && contactsResult.value.success) {
+        setContacts(contactsResult.value.data)
       }
 
-      if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
-        const statsData = await statsResponse.value.json()
-        setStats(statsData)
+      if (statsResult.status === 'fulfilled' && statsResult.value.success) {
+        setStats(statsResult.value.data)
       }
     } catch (error) {
       console.log('API not available, using mock data')
@@ -208,32 +197,11 @@ const AdminDashboard = () => {
       const email = formData.get('email') as string
       const password = formData.get('password') as string
 
-      // Try real API first
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      // Use Firebase Authentication
+      const result = await authService.adminLogin(email, password)
       
-      try {
-        const response = await fetch(`${apiUrl}/api/auth/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password })
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          localStorage.setItem('adminToken', data.token)
-          setIsAuthenticated(true)
-          loadDashboardData()
-          return
-        }
-      } catch (apiError) {
-        console.log('API not available, using fallback authentication')
-      }
-
-      // Fallback: use mock authentication for development
-      if (email === 'admin@smartleader.com' && password) {
-        localStorage.setItem('adminToken', 'mock-admin-token')
+      if (result.success) {
+        localStorage.setItem('adminToken', 'firebase-admin-token')
         setIsAuthenticated(true)
         loadDashboardData()
         return
