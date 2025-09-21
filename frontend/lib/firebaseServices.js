@@ -115,12 +115,16 @@ export const projectsService = {
   // Create project (Admin only)
   async createProject(projectData) {
     try {
+      // Generate unique ID
+      const uniqueId = Date.now();
       const docRef = await addDoc(collection(db, 'projects'), {
         ...projectData,
+        id: uniqueId, // Store custom ID
+        price: Number(projectData.price), // Ensure price is number
         createdAt: new Date(),
         updatedAt: new Date()
       });
-      return { success: true, id: docRef.id };
+      return { success: true, id: uniqueId };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -129,9 +133,18 @@ export const projectsService = {
   // Update project (Admin only)
   async updateProject(id, projectData) {
     try {
-      const projectRef = doc(db, 'projects', id);
-      await updateDoc(projectRef, {
+      // Find document by custom ID
+      const projectsRef = collection(db, 'projects');
+      const snapshot = await getDocs(projectsRef);
+      const projectDoc = snapshot.docs.find(doc => doc.data().id === id);
+      
+      if (!projectDoc) {
+        return { success: false, error: 'Project not found' };
+      }
+      
+      await updateDoc(projectDoc.ref, {
         ...projectData,
+        price: Number(projectData.price), // Ensure price is number
         updatedAt: new Date()
       });
       return { success: true };
@@ -143,7 +156,16 @@ export const projectsService = {
   // Delete project (Admin only)
   async deleteProject(id) {
     try {
-      await deleteDoc(doc(db, 'projects', id));
+      // Find document by custom ID
+      const projectsRef = collection(db, 'projects');
+      const snapshot = await getDocs(projectsRef);
+      const projectDoc = snapshot.docs.find(doc => doc.data().id === id);
+      
+      if (!projectDoc) {
+        return { success: false, error: 'Project not found' };
+      }
+      
+      await deleteDoc(projectDoc.ref);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -156,12 +178,15 @@ export const contactsService = {
   // Submit contact form
   async submitContact(contactData) {
     try {
+      // Generate unique ID
+      const uniqueId = Date.now();
       const docRef = await addDoc(collection(db, 'contacts'), {
         ...contactData,
+        id: uniqueId, // Store custom ID
         status: 'New',
         createdAt: new Date()
       });
-      return { success: true, id: docRef.id };
+      return { success: true, id: uniqueId };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -194,8 +219,16 @@ export const contactsService = {
   // Update contact status (Admin only)
   async updateContactStatus(id, status) {
     try {
-      const contactRef = doc(db, 'contacts', id);
-      await updateDoc(contactRef, { 
+      // Find document by custom ID
+      const contactsRef = collection(db, 'contacts');
+      const snapshot = await getDocs(contactsRef);
+      const contactDoc = snapshot.docs.find(doc => doc.data().id === id);
+      
+      if (!contactDoc) {
+        return { success: false, error: 'Contact not found' };
+      }
+      
+      await updateDoc(contactDoc.ref, { 
         status,
         updatedAt: new Date()
       });
@@ -208,7 +241,16 @@ export const contactsService = {
   // Delete contact (Admin only)
   async deleteContact(id) {
     try {
-      await deleteDoc(doc(db, 'contacts', id));
+      // Find document by custom ID
+      const contactsRef = collection(db, 'contacts');
+      const snapshot = await getDocs(contactsRef);
+      const contactDoc = snapshot.docs.find(doc => doc.data().id === id);
+      
+      if (!contactDoc) {
+        return { success: false, error: 'Contact not found' };
+      }
+      
+      await deleteDoc(contactDoc.ref);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };

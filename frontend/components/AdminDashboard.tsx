@@ -56,6 +56,7 @@ const AdminDashboard = () => {
   const [projects, setProjects] = useState<Project[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [showAddProject, setShowAddProject] = useState(false)
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null)
   const [newProject, setNewProject] = useState({
     title: '',
     description: '',
@@ -222,49 +223,56 @@ const AdminDashboard = () => {
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const project: Project = {
-        id: Date.now(),
-        ...newProject,
-        createdAt: new Date().toISOString(),
-        views: 0
+      let result
+      
+      if (editingProjectId) {
+        // Update existing project
+        result = await projectsService.updateProject(editingProjectId, {
+          ...newProject,
+          views: 0
+        })
+      } else {
+        // Create new project
+        result = await projectsService.createProject({
+          ...newProject,
+          views: 0
+        })
       }
       
-      setProjects([project, ...projects])
-      setStats(prev => ({
-        ...prev,
-        projects: {
-          ...prev.projects,
-          total: prev.projects.total + 1,
-          available: newProject.status === 'Available' ? prev.projects.available + 1 : prev.projects.available
-        }
-      }))
-      
-      // Reset form
-      setNewProject({
-        title: '',
-        description: '',
-        longDescription: '',
-        location: '',
-        price: 0,
-        area: '',
-        completionDate: '',
-        status: 'Available',
-        specifications: {
-          bedrooms: '',
-          bathrooms: '',
-          parking: '',
-          floor: '',
-          type: ''
-        },
-        features: [],
-        images: []
-      })
-      setShowAddProject(false)
-      
-      alert('تم إضافة المشروع بنجاح!')
+      if (result.success) {
+        // Reload projects from Firebase
+        loadDashboardData()
+        
+        // Reset form
+        setNewProject({
+          title: '',
+          description: '',
+          longDescription: '',
+          location: '',
+          price: 0,
+          area: '',
+          completionDate: '',
+          status: 'Available',
+          specifications: {
+            bedrooms: '',
+            bathrooms: '',
+            parking: '',
+            floor: '',
+            type: ''
+          },
+          features: [],
+          images: []
+        })
+        setEditingProjectId(null)
+        setShowAddProject(false)
+        
+        alert(editingProjectId ? 'تم تحديث المشروع بنجاح!' : 'تم إضافة المشروع بنجاح!')
+      } else {
+        alert('فشل العملية: ' + result.error)
+      }
     } catch (error) {
-      console.error('Error adding project:', error)
-      alert('حدث خطأ في إضافة المشروع')
+      console.error('Error:', error)
+      alert('حدث خطأ في العملية')
     }
   }
 
@@ -289,17 +297,21 @@ const AdminDashboard = () => {
     }))
   }
 
-  const deleteProject = (id: number) => {
+  const deleteProject = async (id: number) => {
     if (confirm('هل أنت متأكد من حذف هذا المشروع؟')) {
-      setProjects(projects.filter(project => project.id !== id))
-      setStats(prev => ({
-        ...prev,
-        projects: {
-          ...prev.projects,
-          total: prev.projects.total - 1
+      try {
+        const result = await projectsService.deleteProject(id)
+        if (result.success) {
+          // Reload projects from Firebase
+          loadDashboardData()
+          alert('تم حذف المشروع بنجاح!')
+        } else {
+          alert('فشل حذف المشروع: ' + result.error)
         }
-      }))
-      alert('تم حذف المشروع بنجاح!')
+      } catch (error) {
+        console.error('Error deleting project:', error)
+        alert('حدث خطأ في حذف المشروع')
+      }
     }
   }
 
@@ -319,6 +331,7 @@ const AdminDashboard = () => {
         features: project.features,
         images: project.images
       })
+      setEditingProjectId(id)
       setShowAddProject(true)
     }
   }
@@ -545,9 +558,14 @@ const AdminDashboard = () => {
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">إضافة مشروع جديد</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {editingProjectId ? 'تعديل المشروع' : 'إضافة مشروع جديد'}
+                    </h2>
                     <button 
-                      onClick={() => setShowAddProject(false)}
+                      onClick={() => {
+                        setShowAddProject(false)
+                        setEditingProjectId(null)
+                      }}
                       className="text-gray-500 hover:text-gray-700"
                     >
                       ✕
@@ -787,7 +805,10 @@ const AdminDashboard = () => {
                     <div className="flex justify-end space-x-4">
                       <button
                         type="button"
-                        onClick={() => setShowAddProject(false)}
+                        onClick={() => {
+                          setShowAddProject(false)
+                          setEditingProjectId(null)
+                        }}
                         className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                       >
                         إلغاء
@@ -796,7 +817,7 @@ const AdminDashboard = () => {
                         type="submit"
                         className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                       >
-                        إضافة المشروع
+                        {editingProjectId ? 'تحديث المشروع' : 'إضافة المشروع'}
                       </button>
                     </div>
                   </form>
