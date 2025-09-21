@@ -46,8 +46,8 @@ const ContactForm = () => {
       } else {
         throw new Error('Failed to send message')
       }
-    } catch (error) {
-      console.error('Error sending message:', error)
+    } catch (err) {
+      console.error('Error sending message:', err)
       error('فشل في إرسال الرسالة', 'يرجى المحاولة مرة أخرى أو التواصل معنا مباشرة')
     } finally {
       setIsSubmitting(false)
