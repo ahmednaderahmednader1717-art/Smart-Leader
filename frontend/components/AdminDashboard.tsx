@@ -15,7 +15,8 @@ import {
   Settings,
   BarChart3,
   X,
-  Info
+  Info,
+  AlertCircle
 } from 'lucide-react'
 import { authService, projectsService, contactsService, adminService } from '@/lib/firebaseServices'
 import { useAuth } from '@/lib/useAuth'
@@ -57,7 +58,7 @@ interface Contact {
 
 const AdminDashboard = () => {
   const { success, error, warning, info } = useToastContext()
-  const { user, loading, login, logout, createUser, isAdmin, isAuthenticated } = useAuth()
+  const { user, loading, login, logout, createUser, deleteUserAccount, isAdmin, isManager, isAuthenticated } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [projects, setProjects] = useState<Project[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -66,6 +67,11 @@ const AdminDashboard = () => {
   const [showAddUser, setShowAddUser] = useState(false)
   const [newUserEmail, setNewUserEmail] = useState('')
   const [newUserPassword, setNewUserPassword] = useState('')
+  const [users, setUsers] = useState<any[]>([])
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<any>(null)
+  const [showManagerModal, setShowManagerModal] = useState(false)
+  const [userToPromote, setUserToPromote] = useState<any>(null)
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [settings, setSettings] = useState({
@@ -102,6 +108,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (isAuthenticated && isAdmin()) {
       loadDashboardData()
+      loadUsers()
     }
     
     // Load saved settings
@@ -289,6 +296,13 @@ const AdminDashboard = () => {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check if user is manager
+    if (!isManager()) {
+      error('Access Denied', 'Only managers can create new users')
+      return
+    }
+    
     try {
       const result = await createUser(newUserEmail, newUserPassword)
       
@@ -297,6 +311,7 @@ const AdminDashboard = () => {
         setNewUserEmail('')
         setNewUserPassword('')
         setShowAddUser(false)
+        loadUsers() // Reload users list
       } else {
         // Handle specific Firebase errors
         if (result.code === 'auth/email-already-in-use') {
@@ -313,6 +328,65 @@ const AdminDashboard = () => {
       console.error('Create user error:', err)
       error('Connection Error', 'Please check your internet connection')
     }
+  }
+
+  const loadUsers = async () => {
+    try {
+      // For now, we'll use a simple approach
+      // In a real app, you'd fetch users from Firebase Admin SDK
+      const currentUser = user
+      if (currentUser) {
+        setUsers([currentUser]) // Show current user as example
+      }
+    } catch (err) {
+      console.error('Load users error:', err)
+    }
+  }
+
+  const handleDeleteUser = (userToDelete: any) => {
+    setUserToDelete(userToDelete)
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return
+    
+    // Check if user is manager
+    if (!isManager()) {
+      error('Access Denied', 'Only managers can delete users')
+      return
+    }
+    
+    try {
+      const result = await deleteUserAccount(userToDelete)
+      
+      if (result.success) {
+        success('User Deleted', `Successfully deleted user: ${userToDelete.email}`)
+        setShowDeleteConfirm(false)
+        setUserToDelete(null)
+        loadUsers() // Reload users list
+      } else {
+        error('Delete User Error', result.error || 'Failed to delete user')
+      }
+    } catch (err) {
+      console.error('Delete user error:', err)
+      error('Connection Error', 'Please check your internet connection')
+    }
+  }
+
+  const handlePromoteToManager = (userToPromote: any) => {
+    setUserToPromote(userToPromote)
+    setShowManagerModal(true)
+  }
+
+  const confirmPromoteToManager = () => {
+    if (!userToPromote) return
+    
+    // Show instructions for manual promotion
+    info('Manager Promotion', `To promote ${userToPromote.email} to Manager:\n\n1. Add their email to the managerEmails array in useAuth.js\n2. Push the changes to Git\n3. The user will have Manager privileges after the update`)
+    
+    setShowManagerModal(false)
+    setUserToPromote(null)
   }
 
   const handleAddProject = async (e: React.FormEvent) => {
@@ -671,7 +745,7 @@ Smart Leader Team`
                   Smart Leader Dashboard
                 </h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  Admin
+                  {isManager() ? 'Manager' : 'Admin'}
                 </p>
               </div>
             </div>
@@ -693,7 +767,7 @@ Smart Leader Team`
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'projects', label: 'Projects', icon: TrendingUp },
             { id: 'contacts', label: 'Messages', icon: MessageSquare },
-            { id: 'users', label: 'Users', icon: Users },
+            ...(isManager() ? [{ id: 'users', label: 'Users', icon: Users }] : []),
             { id: 'settings', label: 'Settings', icon: Settings }
           ].map((tab) => (
             <button
@@ -1444,14 +1518,169 @@ Smart Leader Team`
               </div>
             )}
 
-            {/* Users Info */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            {/* Users List */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Registered Users</h3>
+              
+              {users.length > 0 ? (
+                <div className="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                      <thead className="bg-gray-50 dark:bg-gray-600">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Email
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Created
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
+                        {users.map((user, index) => (
+                          <tr key={index}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                              {user.email}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handlePromoteToManager(user)}
+                                  className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 flex items-center space-x-1"
+                                >
+                                  <Users className="h-4 w-4" />
+                                  <span>Promote</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(user)}
+                                  className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 flex items-center space-x-1"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">No users found</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Add your first user to get started</p>
+                </div>
+              )}
+            </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && userToDelete && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="flex-shrink-0">
+                      <AlertCircle className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete User</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <p className="text-gray-700 dark:text-gray-300">
+                      Are you sure you want to delete user <strong>{userToDelete.email}</strong>?
+                    </p>
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={confirmDeleteUser}
+                      className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Delete User
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDeleteConfirm(false)
+                        setUserToDelete(null)
+                      }}
+                      className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Manager Promotion Modal */}
+            {showManagerModal && userToPromote && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="flex-shrink-0">
+                      <Users className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Promote to Manager</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Grant manager privileges</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      Promote <strong>{userToPromote.email}</strong> to Manager?
+                    </p>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Manager Privileges:</h4>
+                      <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                        <li>• Add new users</li>
+                        <li>• Delete existing users</li>
+                        <li>• Access User Management</li>
+                        <li>• Full admin dashboard access</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={confirmPromoteToManager}
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Promote to Manager
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowManagerModal(false)
+                        setUserToPromote(null)
+                      }}
+                      className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Manager Info */}
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-6">
               <div className="flex items-start space-x-3">
-                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <Info className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">User Management</h4>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                    Add new users to Firebase Authentication. They will automatically have access to the admin dashboard.
+                  <h4 className="text-sm font-medium text-green-900 dark:text-green-100">Manager Privileges</h4>
+                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                    As a Manager, you have full access to user management. You can add new users and delete existing ones.
+                    Regular users cannot see this section.
                   </p>
                 </div>
               </div>

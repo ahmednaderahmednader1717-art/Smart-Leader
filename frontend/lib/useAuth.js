@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from './firebase'
+import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, deleteUser } from './firebase'
 import { User } from 'firebase/auth'
 
 export const useAuth = () => {
@@ -60,11 +60,38 @@ export const useAuth = () => {
     }
   }
 
+  const deleteUserAccount = async (userToDelete) => {
+    try {
+      console.log('Deleting user:', userToDelete.email)
+      await deleteUser(userToDelete)
+      console.log('User deleted successfully:', userToDelete.email)
+      return { success: true }
+    } catch (error) {
+      console.error('Delete User Error:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      return { success: false, error: error.message, code: error.code }
+    }
+  }
+
   const isAdmin = () => {
     // Any authenticated user from Firebase is considered admin
     // No need to maintain a manual list - all Firebase users are authorized
     console.log('isAdmin check:', { user: user?.email, hasUser: !!user, hasEmail: !!user?.email })
     return user && user.email
+  }
+
+  const isManager = () => {
+    // Only specific emails are authorized as managers
+    const managerEmails = [
+      'ahmednaderahmednader1717@gmail.com',
+      'admin@smartleader.com',
+      'manager@smartleader.com',
+      'newmanager@smartleader.com', // Add new manager email here
+      'supervisor@smartleader.com'  // Add another manager email here
+    ]
+    
+    return user && user.email && managerEmails.includes(user.email.toLowerCase())
   }
 
   return {
@@ -73,7 +100,9 @@ export const useAuth = () => {
     login,
     logout,
     createUser,
+    deleteUserAccount,
     isAdmin: isAdmin,
+    isManager: isManager,
     isAuthenticated: !!user
   }
 }
