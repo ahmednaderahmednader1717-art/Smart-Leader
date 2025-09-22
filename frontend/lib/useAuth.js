@@ -81,18 +81,6 @@ export const useAuth = () => {
     return user && user.email
   }
 
-  const isManager = () => {
-    // Only specific emails are authorized as managers
-    const managerEmails = [
-      'ahmednaderahmednader1717@gmail.com',
-      'admin@smartleader.com',
-      'manager@smartleader.com',
-      'newmanager@smartleader.com', // Add new manager email here
-      'supervisor@smartleader.com'  // Add another manager email here
-    ]
-    
-    return user && user.email && managerEmails.includes(user.email.toLowerCase())
-  }
 
   return {
     user,
@@ -102,7 +90,6 @@ export const useAuth = () => {
     createUser,
     deleteUserAccount,
     isAdmin: isAdmin,
-    isManager: isManager,
     isAuthenticated: !!user
   }
 }
