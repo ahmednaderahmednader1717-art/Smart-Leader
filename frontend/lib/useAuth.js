@@ -17,10 +17,22 @@ export const useAuth = () => {
 
   const login = async (email, password) => {
     try {
+      console.log('Attempting login with:', { email, password: '***' })
+      
+      // Check for special characters that might cause issues
+      if (password.includes('$') || password.includes('&') || password.includes('#')) {
+        console.warn('Password contains special characters that might cause issues')
+      }
+      
       const result = await signInWithEmailAndPassword(auth, email, password)
+      console.log('Login successful:', result.user.email)
       return { success: true, user: result.user }
     } catch (error) {
       console.error('Firebase Auth Error:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      console.error('Email used:', email)
+      console.error('Password length:', password.length)
       return { success: false, error: error.message, code: error.code }
     }
   }
@@ -45,7 +57,7 @@ export const useAuth = () => {
     loading,
     login,
     logout,
-    isAdmin: isAdmin(),
+    isAdmin: isAdmin,
     isAuthenticated: !!user
   }
 }

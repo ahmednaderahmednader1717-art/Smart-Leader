@@ -95,7 +95,7 @@ const AdminDashboard = () => {
 
   // Load dashboard data when authenticated
   useEffect(() => {
-    if (isAuthenticated && isAdmin) {
+    if (isAuthenticated && isAdmin()) {
       loadDashboardData()
     }
     
@@ -223,7 +223,7 @@ const AdminDashboard = () => {
       const result = await login(email, password)
       
       if (result.success) {
-        if (result.user && isAdmin) {
+        if (result.user && isAdmin()) {
           success('Welcome!', `Successfully logged in as ${result.user.email}`)
           loadDashboardData()
         } else {
@@ -233,19 +233,23 @@ const AdminDashboard = () => {
       } else {
         // Handle specific Firebase errors
         console.log('Login Error Details:', result)
+        console.log('Error code:', result.code)
+        console.log('Error message:', result.error)
         
         if (result.code === 'auth/invalid-credential') {
-          error('Invalid Credentials', 'Email or password is incorrect. Please check your credentials.')
+          error('Invalid Credentials', 'Email or password is incorrect. Please check your credentials and make sure the user exists in Firebase. Note: Special characters like $, &, # in passwords might cause issues.')
         } else if (result.code === 'auth/user-not-found') {
-          error('User Not Found', 'No account found with this email address.')
+          error('User Not Found', 'No account found with this email address. Please add the user in Firebase Console first.')
         } else if (result.code === 'auth/wrong-password') {
-          error('Wrong Password', 'The password is incorrect.')
+          error('Wrong Password', 'The password is incorrect. Please check the password in Firebase Console.')
         } else if (result.code === 'auth/too-many-requests') {
           error('Too Many Attempts', 'Too many failed login attempts. Please try again later.')
         } else if (result.code === 'auth/invalid-email') {
           error('Invalid Email', 'Please enter a valid email address.')
         } else if (result.code === 'auth/user-disabled') {
           error('Account Disabled', 'This account has been disabled.')
+        } else if (result.code === 'auth/operation-not-allowed') {
+          error('Operation Not Allowed', 'Email/Password authentication is not enabled. Please enable it in Firebase Console.')
         } else {
           error('Login Error', result.error || 'Please check your credentials')
         }
