@@ -231,7 +231,24 @@ const AdminDashboard = () => {
           await logout()
         }
       } else {
-        error('Login Error', result.error || 'Please check your credentials')
+        // Handle specific Firebase errors
+        console.log('Login Error Details:', result)
+        
+        if (result.code === 'auth/invalid-credential') {
+          error('Invalid Credentials', 'Email or password is incorrect. Please check your credentials.')
+        } else if (result.code === 'auth/user-not-found') {
+          error('User Not Found', 'No account found with this email address.')
+        } else if (result.code === 'auth/wrong-password') {
+          error('Wrong Password', 'The password is incorrect.')
+        } else if (result.code === 'auth/too-many-requests') {
+          error('Too Many Attempts', 'Too many failed login attempts. Please try again later.')
+        } else if (result.code === 'auth/invalid-email') {
+          error('Invalid Email', 'Please enter a valid email address.')
+        } else if (result.code === 'auth/user-disabled') {
+          error('Account Disabled', 'This account has been disabled.')
+        } else {
+          error('Login Error', result.error || 'Please check your credentials')
+        }
       }
     } catch (err) {
       console.error('Login error:', err)

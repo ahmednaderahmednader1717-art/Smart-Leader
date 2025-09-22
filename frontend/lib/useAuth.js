@@ -20,7 +20,8 @@ export const useAuth = () => {
       const result = await signInWithEmailAndPassword(auth, email, password)
       return { success: true, user: result.user }
     } catch (error) {
-      return { success: false, error: error.message }
+      console.error('Firebase Auth Error:', error)
+      return { success: false, error: error.message, code: error.code }
     }
   }
 
@@ -40,6 +41,7 @@ export const useAuth = () => {
       'ahmednaderahmednader1717@gmail.com',
       'manager@smartleader.com',
       'support@smartleader.com',
+      'test@smartleader.com', // Test user
       // Add more admin emails here
     ]
     
