@@ -223,10 +223,24 @@ const AdminDashboard = () => {
       const result = await login(email, password)
       
       if (result.success) {
+        // Wait a bit for the user state to update
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        console.log('Login successful, checking admin access:', {
+          user: result.user?.email,
+          isAdmin: isAdmin(),
+          isAuthenticated: isAuthenticated
+        })
+        
         if (result.user && isAdmin()) {
           success('Welcome!', `Successfully logged in as ${result.user.email}`)
           loadDashboardData()
         } else {
+          console.log('Access denied - user or admin check failed:', {
+            hasUser: !!result.user,
+            isAdminResult: isAdmin(),
+            userEmail: result.user?.email
+          })
           error('Access Denied', 'This email is not authorized for admin access')
           await logout()
         }

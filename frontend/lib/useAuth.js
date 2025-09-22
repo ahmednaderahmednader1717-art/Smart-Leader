@@ -49,6 +49,7 @@ export const useAuth = () => {
   const isAdmin = () => {
     // Any authenticated user from Firebase is considered admin
     // No need to maintain a manual list - all Firebase users are authorized
+    console.log('isAdmin check:', { user: user?.email, hasUser: !!user, hasEmail: !!user?.email })
     return user && user.email
   }
 
