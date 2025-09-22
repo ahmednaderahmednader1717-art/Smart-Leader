@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from './firebase'
+import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from './firebase'
 import { User } from 'firebase/auth'
 
 export const useAuth = () => {
@@ -46,6 +46,20 @@ export const useAuth = () => {
     }
   }
 
+  const createUser = async (email, password) => {
+    try {
+      console.log('Creating user with:', { email, password: '***' })
+      const result = await createUserWithEmailAndPassword(auth, email, password)
+      console.log('User created successfully:', result.user.email)
+      return { success: true, user: result.user }
+    } catch (error) {
+      console.error('Create User Error:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      return { success: false, error: error.message, code: error.code }
+    }
+  }
+
   const isAdmin = () => {
     // Any authenticated user from Firebase is considered admin
     // No need to maintain a manual list - all Firebase users are authorized
@@ -58,6 +72,7 @@ export const useAuth = () => {
     loading,
     login,
     logout,
+    createUser,
     isAdmin: isAdmin,
     isAuthenticated: !!user
   }
