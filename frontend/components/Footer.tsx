@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { Lightbulb, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react'
+import { getCompanySettings } from '@/lib/settings'
 
 const Footer = () => {
+  const settings = getCompanySettings()
   return (
     <footer className="bg-gray-900 dark:bg-gray-950 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -86,11 +88,11 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-primary-400 dark:text-primary-300 flex-shrink-0" />
-                <p className="text-gray-300 dark:text-gray-400 text-sm">+20 123 456 7890</p>
+                <p className="text-gray-300 dark:text-gray-400 text-sm">{settings.phone}</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-primary-400 dark:text-primary-300 flex-shrink-0" />
-                <p className="text-gray-300 dark:text-gray-400 text-sm">info@smartleader.com</p>
+                <p className="text-gray-300 dark:text-gray-400 text-sm">{settings.email}</p>
               </div>
             </div>
           </div>
