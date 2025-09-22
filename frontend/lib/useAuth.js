@@ -42,6 +42,19 @@ export const useAuth = () => {
       'manager@smartleader.com',
       'support@smartleader.com',
       'test@smartleader.com', // Test user
+      'ahmed@smartleader.com', // Add your email here
+      'ahmednaderahmednader1717@gmail.com', // Your Firebase email
+      'admin@smartleader.com', // Main admin
+      'ahmed@smartleader.com', // Alternative admin
+      'support@smartleader.com', // Support admin
+      'manager@smartleader.com', // Manager admin
+      'ahmednaderahmednader1717@gmail.com', // Your Firebase email
+      'admin@smartleader.com', // Main admin
+      'ahmed@smartleader.com', // Alternative admin
+      'support@smartleader.com', // Support admin
+      'manager@smartleader.com', // Manager admin
+      'test@smartleader.com', // Test user
+      'YOUR_FIREBASE_EMAIL@gmail.com', // Replace with your actual Firebase email
       // Add more admin emails here
     ]
     
