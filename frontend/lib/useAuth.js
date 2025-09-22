@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, deleteUser } from './firebase'
+import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from './firebase'
 import { User } from 'firebase/auth'
 
 export const useAuth = () => {
@@ -46,33 +46,6 @@ export const useAuth = () => {
     }
   }
 
-  const createUser = async (email, password) => {
-    try {
-      console.log('Creating user with:', { email, password: '***' })
-      const result = await createUserWithEmailAndPassword(auth, email, password)
-      console.log('User created successfully:', result.user.email)
-      return { success: true, user: result.user }
-    } catch (error) {
-      console.error('Create User Error:', error)
-      console.error('Error code:', error.code)
-      console.error('Error message:', error.message)
-      return { success: false, error: error.message, code: error.code }
-    }
-  }
-
-  const deleteUserAccount = async (userToDelete) => {
-    try {
-      console.log('Deleting user:', userToDelete.email)
-      await deleteUser(userToDelete)
-      console.log('User deleted successfully:', userToDelete.email)
-      return { success: true }
-    } catch (error) {
-      console.error('Delete User Error:', error)
-      console.error('Error code:', error.code)
-      console.error('Error message:', error.message)
-      return { success: false, error: error.message, code: error.code }
-    }
-  }
 
   const isAdmin = () => {
     // Any authenticated user from Firebase is considered admin
@@ -87,8 +60,6 @@ export const useAuth = () => {
     loading,
     login,
     logout,
-    createUser,
-    deleteUserAccount,
     isAdmin: isAdmin,
     isAuthenticated: !!user
   }

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Lightbulb, 
-  Users, 
   MessageSquare, 
   TrendingUp, 
   Plus, 
@@ -58,18 +57,12 @@ interface Contact {
 
 const AdminDashboard = () => {
   const { success, error, warning, info } = useToastContext()
-  const { user, loading, login, logout, createUser, deleteUserAccount, isAdmin, isAuthenticated } = useAuth()
+  const { user, loading, login, logout, isAdmin, isAuthenticated } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [projects, setProjects] = useState<Project[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [showAddProject, setShowAddProject] = useState(false)
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null)
-  const [showAddUser, setShowAddUser] = useState(false)
-  const [newUserEmail, setNewUserEmail] = useState('')
-  const [newUserPassword, setNewUserPassword] = useState('')
-  const [users, setUsers] = useState<any[]>([])
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [userToDelete, setUserToDelete] = useState<any>(null)
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [settings, setSettings] = useState({
@@ -106,7 +99,6 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (isAuthenticated && isAdmin()) {
       loadDashboardData()
-      loadUsers()
     }
     
     // Load saved settings
@@ -292,72 +284,6 @@ const AdminDashboard = () => {
     }
   }
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const result = await createUser(newUserEmail, newUserPassword)
-      
-      if (result.success) {
-        success('User Created', `Successfully created user: ${newUserEmail}`)
-        setNewUserEmail('')
-        setNewUserPassword('')
-        setShowAddUser(false)
-        loadUsers() // Reload users list
-      } else {
-        // Handle specific Firebase errors
-        if (result.code === 'auth/email-already-in-use') {
-          error('Email Already Exists', 'This email is already registered. Please use a different email.')
-        } else if (result.code === 'auth/invalid-email') {
-          error('Invalid Email', 'Please enter a valid email address.')
-        } else if (result.code === 'auth/weak-password') {
-          error('Weak Password', 'Password should be at least 6 characters long.')
-        } else {
-          error('Create User Error', result.error || 'Failed to create user')
-        }
-      }
-    } catch (err) {
-      console.error('Create user error:', err)
-      error('Connection Error', 'Please check your internet connection')
-    }
-  }
-
-  const loadUsers = async () => {
-    try {
-      // For now, we'll use a simple approach
-      // In a real app, you'd fetch users from Firebase Admin SDK
-      const currentUser = user
-      if (currentUser) {
-        setUsers([currentUser]) // Show current user as example
-      }
-    } catch (err) {
-      console.error('Load users error:', err)
-    }
-  }
-
-  const handleDeleteUser = (userToDelete: any) => {
-    setUserToDelete(userToDelete)
-    setShowDeleteConfirm(true)
-  }
-
-  const confirmDeleteUser = async () => {
-    if (!userToDelete) return
-    
-    try {
-      const result = await deleteUserAccount(userToDelete)
-      
-      if (result.success) {
-        success('User Deleted', `Successfully deleted user: ${userToDelete.email}`)
-        setShowDeleteConfirm(false)
-        setUserToDelete(null)
-        loadUsers() // Reload users list
-      } else {
-        error('Delete User Error', result.error || 'Failed to delete user')
-      }
-    } catch (err) {
-      console.error('Delete user error:', err)
-      error('Connection Error', 'Please check your internet connection')
-    }
-  }
 
 
   const handleAddProject = async (e: React.FormEvent) => {
@@ -738,7 +664,6 @@ Smart Leader Team`
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'projects', label: 'Projects', icon: TrendingUp },
             { id: 'contacts', label: 'Messages', icon: MessageSquare },
-            { id: 'users', label: 'Users', icon: Users },
             { id: 'settings', label: 'Settings', icon: Settings }
           ].map((tab) => (
             <button
@@ -804,7 +729,7 @@ Smart Leader Team`
                     <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.contacts.new}</p>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
+                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
               </div>
@@ -1411,195 +1336,6 @@ Smart Leader Team`
           </div>
         )}
 
-        {/* Users Tab */}
-        {activeTab === 'users' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">User Management</h2>
-              <button
-                onClick={() => setShowAddUser(true)}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add User</span>
-              </button>
-            </div>
-
-            {/* Add User Modal */}
-            {showAddUser && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add New User</h3>
-                    <button
-                      onClick={() => setShowAddUser(false)}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                  
-                  <form onSubmit={handleCreateUser} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        value={newUserEmail}
-                        onChange={(e) => setNewUserEmail(e.target.value)}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="user@example.com"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        value={newUserPassword}
-                        onChange={(e) => setNewUserPassword(e.target.value)}
-                        required
-                        minLength={6}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="Minimum 6 characters"
-                      />
-                    </div>
-                    
-                    <div className="flex space-x-3 pt-4">
-                      <button
-                        type="submit"
-                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Create User
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddUser(false)}
-                        className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Users List */}
-            <div className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Registered Users</h3>
-              
-              {users.length > 0 ? (
-                <div className="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-                      <thead className="bg-gray-50 dark:bg-gray-600">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Email
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Created
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-                        {users.map((user, index) => (
-                          <tr key={index}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {user.email}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              {user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'N/A'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <button
-                                onClick={() => handleDeleteUser(user)}
-                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 flex items-center space-x-1"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span>Delete</span>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">No users found</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Add your first user to get started</p>
-                </div>
-              )}
-            </div>
-
-            {/* Delete Confirmation Modal */}
-            {showDeleteConfirm && userToDelete && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="flex-shrink-0">
-                      <AlertCircle className="h-6 w-6 text-red-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete User</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <p className="text-gray-700 dark:text-gray-300">
-                      Are you sure you want to delete user <strong>{userToDelete.email}</strong>?
-                    </p>
-                  </div>
-                  
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={confirmDeleteUser}
-                      className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      Delete User
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowDeleteConfirm(false)
-                        setUserToDelete(null)
-                      }}
-                      className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-
-            {/* Users Info */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-6">
-              <div className="flex items-start space-x-3">
-                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">User Management</h4>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                    Add new users to Firebase Authentication. They will automatically have access to the admin dashboard.
-                    You can also delete users from this list.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (

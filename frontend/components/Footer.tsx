@@ -61,6 +61,11 @@ const Footer = () => {
                   Contact Us
                 </Link>
               </li>
+              <li>
+                <Link href="/admin" className="text-gray-300 dark:text-gray-400 hover:text-primary-400 dark:hover:text-primary-300 transition-colors text-sm">
+                  Admin Panel
+                </Link>
+              </li>
             </ul>
           </div>
 

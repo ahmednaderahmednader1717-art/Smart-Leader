@@ -26,7 +26,6 @@ const Header = () => {
     { name: 'Projects', href: '/projects' },
     { name: 'Previous Projects', href: '/previous-projects' },
     { name: 'Contact', href: '/contact' },
-    { name: 'Admin', href: '/admin' },
   ]
 
   const isActive = (href: string) => pathname === href
@@ -59,7 +58,6 @@ const Header = () => {
                     : 'text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
-                {item.name === 'Admin' && <Settings className="h-4 w-4" />}
                 <span>{item.name}</span>
               </Link>
             ))}
@@ -118,7 +116,6 @@ const Header = () => {
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  {item.name === 'Admin' && <Settings className="h-4 w-4" />}
                   <span>{item.name}</span>
                 </Link>
               ))}
