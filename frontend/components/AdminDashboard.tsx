@@ -16,7 +16,7 @@ import {
   BarChart3
 } from 'lucide-react'
 import { authService, projectsService, contactsService, adminService } from '@/lib/firebaseServices'
-import { signInWithPopup, appleProvider, auth } from '@/lib/firebase'
+import { useAuth } from '@/lib/useAuth'
 import { useToastContext } from './ToastProvider'
 import ImageUpload from './ImageUpload'
 
@@ -55,7 +55,7 @@ interface Contact {
 
 const AdminDashboard = () => {
   const { success, error, warning, info } = useToastContext()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { user, loading, login, logout, isAdmin, isAuthenticated } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [projects, setProjects] = useState<Project[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -93,11 +93,9 @@ const AdminDashboard = () => {
     contacts: { total: 0, new: 0, resolved: 0 }
   })
 
-  // Mock authentication check
+  // Load dashboard data when authenticated
   useEffect(() => {
-    const token = localStorage.getItem('adminToken')
-    if (token) {
-      setIsAuthenticated(true)
+    if (isAuthenticated && isAdmin) {
       loadDashboardData()
     }
     
@@ -222,49 +220,34 @@ const AdminDashboard = () => {
       const password = formData.get('password') as string
 
       // Use Firebase Authentication
-      const result = await authService.adminLogin(email, password)
+      const result = await login(email, password)
       
       if (result.success) {
-        localStorage.setItem('adminToken', 'firebase-admin-token')
-        setIsAuthenticated(true)
-        loadDashboardData()
-        return
+        if (result.user && isAdmin) {
+          success('Welcome!', `Successfully logged in as ${result.user.email}`)
+          loadDashboardData()
+        } else {
+          error('Access Denied', 'This email is not authorized for admin access')
+          await logout()
+        }
+      } else {
+        error('Login Error', result.error || 'Please check your credentials')
       }
-
-      error('Login Error', 'Please check your credentials')
     } catch (err) {
       console.error('Login error:', err)
       error('Connection Error', 'Please check your internet connection')
     }
   }
 
-  const handleAppleSignIn = async () => {
-    try {
-      const result = await signInWithPopup(auth, appleProvider)
-      const user = result.user
-      
-      // Check if user is admin (you can customize this logic)
-      if (user.email && user.email.includes('admin')) {
-        localStorage.setItem('adminToken', 'firebase-admin-token')
-        setIsAuthenticated(true)
-        loadDashboardData()
-        success('Welcome!', 'Successfully logged in with Apple ID')
-      } else {
-        error('Access Denied', 'This Apple ID is not authorized for admin access')
-      }
-    } catch (err: any) {
-      console.error('Apple Sign In error:', err)
-      if (err.code === 'auth/popup-closed-by-user') {
-        error('Sign In Cancelled', 'Apple Sign In was cancelled')
-      } else {
-        error('Apple Sign In Error', err.message || 'Failed to sign in with Apple')
-      }
-    }
-  }
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken')
-    setIsAuthenticated(false)
+  const handleLogout = async () => {
+    try {
+      await logout()
+      success('Logged Out', 'You have been successfully logged out')
+    } catch (err) {
+      console.error('Logout error:', err)
+      error('Logout Error', 'Failed to log out')
+    }
   }
 
   const handleAddProject = async (e: React.FormEvent) => {
@@ -544,6 +527,18 @@ Smart Leader Team`
     }
   }
 
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -593,26 +588,6 @@ Smart Leader Team`
             </button>
           </form>
           
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
-            </div>
-          </div>
-          
-          {/* Apple Sign In Button */}
-          <button
-            onClick={handleAppleSignIn}
-            className="w-full bg-black text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center space-x-2"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-            </svg>
-            <span>Continue with Apple</span>
-          </button>
         </motion.div>
       </div>
     )
@@ -626,9 +601,14 @@ Smart Leader Team`
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2 sm:space-x-4">
               <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
-                Smart Leader Dashboard
-              </h1>
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
+                  Smart Leader Dashboard
+                </h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  Admin
+                </p>
+              </div>
             </div>
             <button
               onClick={handleLogout}
