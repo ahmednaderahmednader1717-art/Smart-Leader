@@ -361,5 +361,37 @@ export const adminService = {
     } catch (error) {
       return { success: false, error: error.message };
     }
+  },
+
+  // Save company settings
+  async saveSettings(settings) {
+    try {
+      // For now, save to localStorage
+      localStorage.setItem('companySettings', JSON.stringify(settings));
+      return { success: true, data: settings };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Get company settings
+  async getSettings() {
+    try {
+      const settings = localStorage.getItem('companySettings');
+      if (settings) {
+        return { success: true, data: JSON.parse(settings) };
+      }
+      return { 
+        success: true, 
+        data: {
+          companyName: 'Smart Leader Real Estate',
+          email: 'info@smartleader.com',
+          phone: '+20 123 456 7890',
+          location: '123 Business District, New Cairo, Egypt'
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 };

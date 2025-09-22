@@ -65,7 +65,8 @@ const AdminDashboard = () => {
   const [settings, setSettings] = useState({
     companyName: 'Smart Leader Real Estate',
     email: 'info@smartleader.com',
-    phone: '+20 123 456 7890'
+    phone: '+20 123 456 7890',
+    location: '123 Business District, New Cairo, Egypt'
   })
   const [newProject, setNewProject] = useState({
     title: '',
@@ -97,6 +98,17 @@ const AdminDashboard = () => {
     if (token) {
       setIsAuthenticated(true)
       loadDashboardData()
+    }
+    
+    // Load saved settings
+    const savedSettings = localStorage.getItem('companySettings')
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings)
+        setSettings(parsedSettings)
+      } catch (err) {
+        console.error('Failed to parse saved settings:', err)
+      }
     }
   }, [])
 
@@ -361,11 +373,19 @@ const AdminDashboard = () => {
     }
   }
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically save to Firebase or your backend
-    success('Settings Saved Successfully!', 'System settings updated')
-    console.log('Settings saved:', settings)
+    try {
+      const result = await adminService.saveSettings(settings)
+      if (result.success) {
+        success('Settings Saved Successfully!', 'System settings updated and will be applied across the site')
+        console.log('Settings saved:', settings)
+      } else {
+        error('Save Failed', result.error || 'Failed to save settings')
+      }
+    } catch (err) {
+      error('Save Failed', 'Failed to save settings. Please try again.')
+    }
   }
 
   const handleSettingsChange = (field: string, value: string) => {
@@ -1296,6 +1316,19 @@ Smart Leader Team`
                   onChange={(e) => handleSettingsChange('phone', e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="Enter phone number"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Office Location
+                </label>
+                <input
+                  type="text"
+                  value={settings.location}
+                  onChange={(e) => handleSettingsChange('location', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Enter office location"
                 />
               </div>
               

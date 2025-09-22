@@ -2,8 +2,27 @@
 
 import { motion } from 'framer-motion'
 import { MapPin, Phone, Mail, Clock, MessageCircle, Users, Star, Award, Shield } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 const ContactInfo = () => {
+  const [settings, setSettings] = useState({
+    companyName: 'Smart Leader Real Estate',
+    email: 'info@smartleader.com',
+    phone: '+20 123 456 7890',
+    location: '123 Business District, New Cairo, Egypt'
+  })
+
+  useEffect(() => {
+    // Load settings from localStorage on client side
+    try {
+      const savedSettings = localStorage.getItem('companySettings')
+      if (savedSettings) {
+        setSettings(JSON.parse(savedSettings))
+      }
+    } catch (error) {
+      console.error('Failed to load company settings:', error)
+    }
+  }, [])
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -29,8 +48,7 @@ const ContactInfo = () => {
             <div>
               <h4 className="font-bold text-gray-900 mb-2 text-lg">Main Office</h4>
               <p className="text-gray-700 leading-relaxed">
-                123 Business District<br />
-                New Cairo, Egypt 11835
+                {settings.location}
               </p>
             </div>
           </div>
@@ -42,9 +60,9 @@ const ContactInfo = () => {
             <div>
               <h4 className="font-bold text-gray-900 mb-2 text-lg">Phone Numbers</h4>
               <p className="text-gray-700 leading-relaxed">
-                Main: <span className="font-semibold text-primary-600">+20 123 456 7890</span><br />
-                Sales: <span className="font-semibold text-primary-600">+20 123 456 7891</span><br />
-                Support: <span className="font-semibold text-primary-600">+20 123 456 7892</span>
+                Main: <span className="font-semibold text-primary-600">{settings.phone}</span><br />
+                Sales: <span className="font-semibold text-primary-600">{settings.phone}</span><br />
+                Support: <span className="font-semibold text-primary-600">{settings.phone}</span>
               </p>
             </div>
           </div>
@@ -56,9 +74,9 @@ const ContactInfo = () => {
             <div>
               <h4 className="font-bold text-gray-900 mb-2 text-lg">Email Addresses</h4>
               <p className="text-gray-700 leading-relaxed">
-                General: <span className="font-semibold text-primary-600">info@smartleader.com</span><br />
-                Sales: <span className="font-semibold text-primary-600">sales@smartleader.com</span><br />
-                Support: <span className="font-semibold text-primary-600">support@smartleader.com</span>
+                General: <span className="font-semibold text-primary-600">{settings.email}</span><br />
+                Sales: <span className="font-semibold text-primary-600">{settings.email}</span><br />
+                Support: <span className="font-semibold text-primary-600">{settings.email}</span>
               </p>
             </div>
           </div>
