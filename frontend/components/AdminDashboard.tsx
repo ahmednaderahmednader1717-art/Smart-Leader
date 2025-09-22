@@ -233,6 +233,16 @@ const AdminDashboard = () => {
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      // Check if images array is too large
+      const totalImageSize = newProject.images.reduce((total, image) => {
+        return total + (image.length * 0.75) // Approximate base64 to bytes conversion
+      }, 0)
+      
+      if (totalImageSize > 5 * 1024 * 1024) { // 5MB limit
+        error('Images Too Large', 'Total image size exceeds 5MB. Please reduce image sizes or remove some images.')
+        return
+      }
+      
       let result
       
       if (editingProjectId) {
@@ -282,7 +292,11 @@ const AdminDashboard = () => {
       }
     } catch (err) {
       console.error('Error:', err)
-      error('Operation Error', 'Please try again')
+      if (err instanceof Error && err.message.includes('size')) {
+        error('Data Too Large', 'The project data is too large. Please reduce image sizes or remove some images.')
+      } else {
+        error('Operation Error', 'Please try again')
+      }
     }
   }
 
@@ -309,7 +323,7 @@ const AdminDashboard = () => {
   }
 
   const deleteProject = async (id: number) => {
-    if (confirm('هل أنت متأكد من حذف هذا المشروع؟')) {
+    if (confirm('Are you sure you want to delete this project?')) {
       try {
         const result = await projectsService.deleteProject(id)
         if (result.success) {
@@ -496,7 +510,7 @@ Smart Leader Team`
           <div className="text-center mb-8">
             <Lightbulb className="h-12 w-12 text-blue-600 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900">Smart Leader</h1>
-            <p className="text-gray-600">تسجيل الدخول للوحة التحكم</p>
+            <p className="text-gray-600">Admin Dashboard Login</p>
           </div>
           
           <form onSubmit={handleLogin} className="space-y-6">
@@ -544,16 +558,18 @@ Smart Leader Team`
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Lightbulb className="h-8 w-8 text-blue-600" />
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Smart Leader Dashboard</h1>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
+                Smart Leader Dashboard
+              </h1>
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              className="flex items-center space-x-1 sm:space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <LogOut className="h-5 w-5" />
-              <span>Logout</span>
+              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
@@ -561,7 +577,7 @@ Smart Leader Team`
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation Tabs */}
-        <div className="flex space-x-8 mb-8">
+        <div className="flex flex-wrap gap-2 sm:gap-4 mb-8">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'projects', label: 'Projects', icon: TrendingUp },
@@ -571,14 +587,14 @@ Smart Leader Team`
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                 activeTab === tab.id
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
-              <tab.icon className="h-5 w-5" />
-              <span>{tab.label}</span>
+              <tab.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden xs:inline">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -587,78 +603,78 @@ Smart Leader Team`
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Projects</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.projects.total}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Total Projects</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.projects.total}</p>
                   </div>
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Available Projects</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.projects.available}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Available Projects</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.projects.available}</p>
                   </div>
-                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Messages</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.contacts.total}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Total Messages</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.contacts.total}</p>
                   </div>
-                  <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                    <MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">New Messages</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.contacts.new}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 truncate">New Messages</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.contacts.new}</p>
                   </div>
-                  <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-                    <Users className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Recent Projects */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Projects</h2>
-              <div className="space-y-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Projects</h2>
+              <div className="space-y-3 sm:space-y-4">
                 {projects.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-center py-4">No projects yet</p>
                 ) : (
                   projects.slice(0, 3).map((project) => (
-                    <div key={project.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                      <div>
-                        <h3 className="font-medium text-gray-900 dark:text-white">{project.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">{project.location}</p>
+                    <div key={project.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg space-y-2 sm:space-y-0">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-gray-900 dark:text-white truncate">{project.title}</h3>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">{project.location}</p>
                       </div>
-                      <div className="flex items-center space-x-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
+                        <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
                           project.status === 'Available' 
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' 
                             : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
                         }`}>
                           {project.status === 'Available' ? 'Available' : 'Under Construction'}
                         </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">{project.views} views</span>
+                        <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{project.views} views</span>
                       </div>
                     </div>
                   ))
@@ -667,27 +683,27 @@ Smart Leader Team`
             </div>
 
             {/* Recent Contacts */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Messages</h2>
-              <div className="space-y-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Messages</h2>
+              <div className="space-y-3 sm:space-y-4">
                 {contacts.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-center py-4">No messages yet</p>
                 ) : (
                   contacts.slice(0, 3).map((contact) => (
-                    <div key={contact.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                      <div>
-                        <h3 className="font-medium text-gray-900 dark:text-white">{contact.name}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">{contact.email}</p>
+                    <div key={contact.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg space-y-2 sm:space-y-0">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-gray-900 dark:text-white truncate">{contact.name}</h3>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">{contact.email}</p>
                       </div>
-                      <div className="flex items-center space-x-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
+                        <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
                           contact.status === 'New' 
                             ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400' 
                             : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
                         }`}>
                           {contact.status === 'New' ? 'New' : 'Replied'}
                         </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                        <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                           {new Date(contact.createdAt).toLocaleDateString('ar-EG')}
                         </span>
                       </div>
@@ -704,10 +720,10 @@ Smart Leader Team`
           <div className="space-y-6">
             {/* Add Project Modal */}
             {showAddProject && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <div className="flex justify-between items-center mb-4 sm:mb-6">
+                    <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                       {editingProjectId ? 'Edit Project' : 'Add New Project'}
                     </h2>
                     <button 
@@ -715,17 +731,17 @@ Smart Leader Team`
                         setShowAddProject(false)
                         setEditingProjectId(null)
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-gray-500 hover:text-gray-700 p-1"
                     >
                       ✕
                     </button>
                   </div>
                   
-                  <form onSubmit={handleAddProject} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <form onSubmit={handleAddProject} className="space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          عنوان المشروع *
+                          Project Title *
                         </label>
                         <input
                           type="text"
@@ -733,13 +749,13 @@ Smart Leader Team`
                           value={newProject.title}
                           onChange={(e) => setNewProject(prev => ({ ...prev, title: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: شقق فاخرة في التجمع الخامس"
+                          placeholder="e.g., Luxury Apartments in New Cairo"
                         />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          الموقع *
+                          Location *
                         </label>
                         <input
                           type="text"
@@ -747,13 +763,13 @@ Smart Leader Team`
                           value={newProject.location}
                           onChange={(e) => setNewProject(prev => ({ ...prev, location: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: التجمع الخامس، القاهرة"
+                          placeholder="e.g., New Cairo, Cairo"
                         />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          السعر *
+                          Price *
                         </label>
                         <input
                           type="text"
@@ -761,13 +777,13 @@ Smart Leader Team`
                           value={newProject.price}
                           onChange={(e) => setNewProject(prev => ({ ...prev, price: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: بداية من 2,500,000 جنيه"
+                          placeholder="e.g., Starting from 2,500,000 EGP"
                         />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          المساحة *
+                          Area *
                         </label>
                         <input
                           type="text"
@@ -775,13 +791,13 @@ Smart Leader Team`
                           value={newProject.area}
                           onChange={(e) => setNewProject(prev => ({ ...prev, area: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: 120-200 متر مربع"
+                          placeholder="e.g., 120-200 sqm"
                         />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          تاريخ الإنجاز *
+                          Completion Date *
                         </label>
                         <input
                           type="text"
@@ -789,30 +805,30 @@ Smart Leader Team`
                           value={newProject.completionDate}
                           onChange={(e) => setNewProject(prev => ({ ...prev, completionDate: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: Q2 2025"
+                          placeholder="e.g., Q2 2025"
                         />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          الحالة
+                          Status
                         </label>
                         <select
                           value={newProject.status}
                           onChange={(e) => setNewProject(prev => ({ ...prev, status: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         >
-                          <option value="Available">متاح</option>
-                          <option value="Completed">مكتمل</option>
-                          <option value="Under Construction">تحت الإنشاء</option>
-                          <option value="Coming Soon">قريباً</option>
+                          <option value="Available">Available</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Under Construction">Under Construction</option>
+                          <option value="Coming Soon">Coming Soon</option>
                         </select>
                       </div>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        الوصف المختصر *
+                        Short Description *
                       </label>
                       <textarea
                         required
@@ -820,13 +836,13 @@ Smart Leader Team`
                         value={newProject.description}
                         onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="وصف مختصر للمشروع..."
+                        placeholder="Brief project description..."
                       />
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        الوصف التفصيلي *
+                        Detailed Description *
                       </label>
                       <textarea
                         required
@@ -834,14 +850,14 @@ Smart Leader Team`
                         value={newProject.longDescription}
                         onChange={(e) => setNewProject(prev => ({ ...prev, longDescription: e.target.value }))}
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="وصف تفصيلي للمشروع..."
+                        placeholder="Detailed project description..."
                       />
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          عدد الغرف
+                          Bedrooms
                         </label>
                         <input
                           type="text"
@@ -850,14 +866,14 @@ Smart Leader Team`
                             ...prev, 
                             specifications: { ...prev.specifications, bedrooms: e.target.value }
                           }))}
-                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: 2-3"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm sm:text-base"
+                          placeholder="e.g., 2-3"
                         />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          عدد الحمامات
+                          Bathrooms
                         </label>
                         <input
                           type="text"
@@ -867,13 +883,13 @@ Smart Leader Team`
                             specifications: { ...prev.specifications, bathrooms: e.target.value }
                           }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: 2-3"
+                          placeholder="e.g., 2-3"
                         />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          موقف السيارات
+                          Parking
                         </label>
                         <input
                           type="text"
@@ -883,13 +899,13 @@ Smart Leader Team`
                             specifications: { ...prev.specifications, parking: e.target.value }
                           }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: 1-2"
+                          placeholder="e.g., 1-2"
                         />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          الطابق
+                          Floor
                         </label>
                         <input
                           type="text"
@@ -899,13 +915,13 @@ Smart Leader Team`
                             specifications: { ...prev.specifications, floor: e.target.value }
                           }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: 3-15"
+                          placeholder="e.g., 3-15"
                         />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          نوع العقار
+                          Property Type
                         </label>
                         <input
                           type="text"
@@ -915,7 +931,7 @@ Smart Leader Team`
                             specifications: { ...prev.specifications, type: e.target.value }
                           }))}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="مثال: شقة"
+                          placeholder="e.g., Apartment"
                         />
                       </div>
                     </div>
@@ -928,7 +944,7 @@ Smart Leader Team`
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        المميزات *
+                        Features *
                       </label>
                       {newProject.features.map((feature, index) => (
                         <div key={index} className="flex items-center space-x-2 mb-2">
@@ -938,7 +954,7 @@ Smart Leader Team`
                             value={feature}
                             onChange={(e) => updateFeature(index, e.target.value)}
                             className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                            placeholder="مثال: تشطيب فاخر"
+                            placeholder="e.g., Luxury finishing"
                           />
                           <button
                             type="button"
@@ -954,26 +970,26 @@ Smart Leader Team`
                         onClick={addFeature}
                         className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
                       >
-                        + إضافة ميزة
+                        + Add Feature
                       </button>
                     </div>
                     
-                    <div className="flex justify-end space-x-4">
+                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
                       <button
                         type="button"
                         onClick={() => {
                           setShowAddProject(false)
                           setEditingProjectId(null)
                         }}
-                        className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm sm:text-base"
                       >
-                        إلغاء
+                        Cancel
                       </button>
                       <button
                         type="submit"
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
                       >
-                        {editingProjectId ? 'تحديث المشروع' : 'إضافة المشروع'}
+                        {editingProjectId ? 'Update Project' : 'Add Project'}
                       </button>
                     </div>
                   </form>
@@ -981,33 +997,34 @@ Smart Leader Team`
               </div>
             )}
             
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">قائمة المشاريع</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Projects List</h2>
                 <button 
                   onClick={() => setShowAddProject(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>إضافة مشروع</span>
+                  <span>Add Project</span>
                 </button>
               </div>
             
-              <div className="overflow-x-auto">
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b dark:border-gray-700">
-                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">العنوان</th>
-                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الحالة</th>
-                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">المشاهدات</th>
-                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الإجراءات</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Title</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Status</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Views</th>
+                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {projects.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                          لا توجد مشاريع بعد
+                          No projects yet
                         </td>
                       </tr>
                     ) : (
@@ -1022,10 +1039,10 @@ Smart Leader Team`
                                 ? 'bg-blue-100 text-blue-800'
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}>
-                              {project.status === 'Available' ? 'متاح' : 
-                               project.status === 'Completed' ? 'مكتمل' :
-                               project.status === 'Under Construction' ? 'تحت الإنشاء' :
-                               project.status === 'Coming Soon' ? 'قريباً' : project.status}
+                              {project.status === 'Available' ? 'Available' : 
+                               project.status === 'Completed' ? 'Completed' :
+                               project.status === 'Under Construction' ? 'Under Construction' :
+                               project.status === 'Coming Soon' ? 'Coming Soon' : project.status}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-gray-900 dark:text-white">{project.views}</td>
@@ -1034,14 +1051,14 @@ Smart Leader Team`
                               <button 
                                 onClick={() => editProject(project.id)}
                                 className="text-green-600 hover:text-green-700"
-                                title="تعديل"
+                                title="Edit"
                               >
                                 <Edit className="h-4 w-4" />
                               </button>
                               <button 
                                 onClick={() => deleteProject(project.id)}
                                 className="text-red-600 hover:text-red-700"
-                                title="حذف"
+                                title="Delete"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -1053,31 +1070,82 @@ Smart Leader Team`
                   </tbody>
                 </table>
               </div>
+
+              {/* Mobile Cards */}
+              <div className="lg:hidden space-y-4">
+                {projects.length === 0 ? (
+                  <p className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    No projects yet
+                  </p>
+                ) : (
+                  projects.map((project) => (
+                    <div key={project.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-white text-sm">{project.title}</h3>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            project.status === 'Available' 
+                              ? 'bg-green-100 text-green-800' 
+                              : project.status === 'Completed'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {project.status === 'Available' ? 'Available' : 
+                             project.status === 'Completed' ? 'Completed' :
+                             project.status === 'Under Construction' ? 'Under Construction' :
+                             project.status === 'Coming Soon' ? 'Coming Soon' : project.status}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{project.views} views</span>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button 
+                            onClick={() => editProject(project.id)}
+                            className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-xs hover:bg-green-700 transition-colors flex items-center justify-center space-x-1"
+                          >
+                            <Edit className="h-3 w-3" />
+                            <span>Edit</span>
+                          </button>
+                          <button 
+                            onClick={() => deleteProject(project.id)}
+                            className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-xs hover:bg-red-700 transition-colors flex items-center justify-center space-x-1"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* Contacts Tab */}
         {activeTab === 'contacts' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">إدارة الرسائل</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-6">Message Management</h2>
             
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b dark:border-gray-700">
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الاسم</th>
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">البريد الإلكتروني</th>
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الحالة</th>
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">التاريخ</th>
-                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">الإجراءات</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Name</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Email</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Status</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Date</th>
+                    <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {contacts.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        لا توجد رسائل بعد
+                        No messages yet
                       </td>
                     </tr>
                   ) : (
@@ -1091,7 +1159,7 @@ Smart Leader Team`
                               ? 'bg-orange-100 text-orange-800' 
                               : 'bg-green-100 text-green-800'
                           }`}>
-                            {contact.status === 'New' ? 'جديد' : 'تم الرد'}
+                            {contact.status === 'New' ? 'New' : 'Replied'}
                           </span>
                         </td>
                         <td className="py-3 px-4">
@@ -1127,6 +1195,61 @@ Smart Leader Team`
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="lg:hidden space-y-4">
+              {contacts.length === 0 ? (
+                <p className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  No messages yet
+                </p>
+              ) : (
+                contacts.map((contact) => (
+                  <div key={contact.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="font-medium text-gray-900 dark:text-white text-sm">{contact.name}</h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-300 truncate">{contact.email}</p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          contact.status === 'New' 
+                            ? 'bg-orange-100 text-orange-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {contact.status === 'New' ? 'New' : 'Replied'}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(contact.createdAt).toLocaleDateString('ar-EG')}
+                        </span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => viewContact(contact.id)}
+                          className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
+                        >
+                          <Eye className="h-3 w-3" />
+                          <span>View</span>
+                        </button>
+                        <button 
+                          onClick={() => markAsRead(contact.id)}
+                          className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-xs hover:bg-green-700 transition-colors flex items-center justify-center space-x-1"
+                        >
+                          <Edit className="h-3 w-3" />
+                          <span>Read</span>
+                        </button>
+                        <button 
+                          onClick={() => deleteContact(contact.id)}
+                          className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-xs hover:bg-red-700 transition-colors flex items-center justify-center space-x-1"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -1188,24 +1311,24 @@ Smart Leader Team`
 
         {/* Message Modal */}
         {showMessageModal && selectedContact && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Message Details</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Contact Message Details</h2>
                 <button 
                   onClick={() => {
                     setShowMessageModal(false)
                     setSelectedContact(null)
                   }}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
                 >
                   ✕
                 </button>
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Contact Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Full Name
@@ -1325,13 +1448,13 @@ Smart Leader Team`
               </div>
               
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 mt-8">
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 mt-6 sm:mt-8">
                 <button
                   onClick={() => {
                     setShowMessageModal(false)
                     setSelectedContact(null)
                   }}
-                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm sm:text-base"
                 >
                   Close
                 </button>
@@ -1342,7 +1465,7 @@ Smart Leader Team`
                       setShowMessageModal(false)
                       setSelectedContact(null)
                     }}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm sm:text-base"
                   >
                     Mark as Read
                   </button>
@@ -1353,7 +1476,7 @@ Smart Leader Team`
                     setShowMessageModal(false)
                     setSelectedContact(null)
                   }}
-                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base"
                 >
                   Delete Message
                 </button>

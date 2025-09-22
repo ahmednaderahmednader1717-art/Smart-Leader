@@ -20,9 +20,15 @@ const ImageUpload = ({ images, onImagesChange, maxImages = 10 }: ImageUploadProp
       const newImages: string[] = []
       
       for (const file of acceptedFiles) {
-        // Convert file to base64 for now (in production, you'd upload to a cloud service)
-        const base64 = await convertToBase64(file)
-        newImages.push(base64)
+        try {
+          // Convert file to base64 with compression
+          const base64 = await convertToBase64(file)
+          newImages.push(base64)
+        } catch (error) {
+          console.error(`Error processing ${file.name}:`, error)
+          // Show user-friendly error message
+          alert(`Error processing ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
       }
       
       // Add new images to existing ones (up to maxImages)
@@ -30,6 +36,7 @@ const ImageUpload = ({ images, onImagesChange, maxImages = 10 }: ImageUploadProp
       onImagesChange(updatedImages)
     } catch (error) {
       console.error('Error uploading images:', error)
+      alert('Error uploading images. Please try again.')
     } finally {
       setUploading(false)
     }
@@ -37,9 +44,52 @@ const ImageUpload = ({ images, onImagesChange, maxImages = 10 }: ImageUploadProp
 
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
+      // Check file size (max 2MB per image)
+      if (file.size > 2 * 1024 * 1024) {
+        reject(new Error('Image size must be less than 2MB'))
+        return
+      }
+
+      // Create canvas to compress image
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 800px width/height)
+        const maxSize = 800
+        let { width, height } = img
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width
+            width = maxSize
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height
+            height = maxSize
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw and compress image
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        // Convert to base64 with compression (0.8 quality)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8)
+        resolve(compressedBase64)
+      }
+      
+      img.onerror = () => reject(new Error('Failed to load image'))
+      
       const reader = new FileReader()
       reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result as string)
+      reader.onload = () => {
+        img.src = reader.result as string
+      }
       reader.onerror = error => reject(error)
     })
   }
@@ -86,7 +136,7 @@ const ImageUpload = ({ images, onImagesChange, maxImages = 10 }: ImageUploadProp
                 Drag & drop images here, or click to select
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                PNG, JPG, GIF, WebP up to {maxImages} images
+                PNG, JPG, GIF, WebP up to {maxImages} images (max 2MB each)
               </p>
             </div>
           )}

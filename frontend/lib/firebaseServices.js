@@ -156,12 +156,12 @@ export const projectsService = {
       console.log('Document size:', docSize, 'bytes');
       
       // If document is too large, split images array
-      if (docSize > 800000) { // 800KB limit (less than 1MB to be safe)
+      if (docSize > 500000) { // 500KB limit (reduced for better performance)
         console.log('Document too large, splitting images array');
         
         // Split images into chunks and store separately
         if (projectData.images && projectData.images.length > 0) {
-          const imageChunks = chunkArray(projectData.images, 5); // 5 images per chunk
+          const imageChunks = chunkArray(projectData.images, 3); // 3 images per chunk (reduced)
           
           // Store main document with first chunk
           docData.images = imageChunks[0] || [];

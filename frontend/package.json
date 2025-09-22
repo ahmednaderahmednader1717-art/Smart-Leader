@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:network": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
+    "start:network": "next start -H 0.0.0.0",
     "lint": "next lint",
     "clean": "rm -rf .next out build",
     "clean:all": "rm -rf .next out build node_modules && npm install",
