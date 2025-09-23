@@ -27,7 +27,9 @@ const ProjectsGrid = () => {
       try {
         const result = await projectsService.getProjects()
         if (result.success && result.data) {
-          setProjects(result.data)
+          // Filter out Sold Out projects (they should only appear in previous projects)
+          const availableProjects = result.data.filter(project => project.status !== 'Sold Out')
+          setProjects(availableProjects)
         } else {
           // Fallback to mock data
           setProjects([
@@ -138,7 +140,11 @@ const ProjectsGrid = () => {
                   className="w-full h-64 object-cover"
                 />
                 <div className="absolute top-4 right-4">
-                  <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-sm font-medium">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    project.status === 'Sold Out' 
+                      ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                      : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                  }`}>
                     {project.status}
                   </span>
                 </div>
@@ -173,13 +179,19 @@ const ProjectsGrid = () => {
                    <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
                      {project.price}
                    </span>
-                  <Link
-                    href={`/projects/${project.id}`}
-                    className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
-                  >
-                    View Details
-                    <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                  {project.status === 'Sold Out' ? (
+                    <span className="inline-flex items-center text-gray-400 dark:text-gray-500 font-medium text-sm">
+                      Sold Out
+                    </span>
+                  ) : (
+                    <Link
+                      href={`/projects/${project.id}`}
+                      className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
+                    >
+                      View Details
+                      <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  )}
                 </div>
               </div>
             </motion.div>

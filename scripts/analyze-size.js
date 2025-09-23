@@ -106,3 +106,6 @@ console.log('6. ضغط الصور والملفات الثابتة');
 // نسبة node_modules من إجمالي المشروع
 const nodeModulesPercentage = ((nodeModulesSize / totalSize) * 100).toFixed(1);
 console.log(`\n📈 node_modules يشكل ${nodeModulesPercentage}% من إجمالي حجم المشروع`);
+
+
+

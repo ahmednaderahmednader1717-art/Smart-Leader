@@ -5,6 +5,7 @@ import Header from '@/components/Header'
 import ClientFooter from '@/components/ClientFooter'
 import { ToastProvider } from '@/components/ToastProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { SettingsProvider } from '@/lib/settingsContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -58,13 +59,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ThemeProvider>
-          <ToastProvider>
-            <Header />
-            <main className="min-h-screen">
-              {children}
-            </main>
-            <ClientFooter />
-          </ToastProvider>
+          <SettingsProvider>
+            <ToastProvider>
+              <Header />
+              <main className="min-h-screen">
+                {children}
+              </main>
+              <ClientFooter />
+            </ToastProvider>
+          </SettingsProvider>
         </ThemeProvider>
       </body>
     </html>

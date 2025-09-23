@@ -119,6 +119,8 @@ const FeaturedProjects = () => {
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     project.status === 'Available' 
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' 
+                      : project.status === 'Sold Out'
+                      ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
                       : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
                   }`}>
                     {project.status}
@@ -144,13 +146,19 @@ const FeaturedProjects = () => {
                    <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
                      {project.price}
                    </span>
-                  <Link
-                    href={`/projects/${project.id}`}
-                    className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
-                  >
-                    View Details
-                    <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                  {project.status === 'Sold Out' ? (
+                    <span className="inline-flex items-center text-gray-400 dark:text-gray-500 font-medium text-sm">
+                      Sold Out
+                    </span>
+                  ) : (
+                    <Link
+                      href={`/projects/${project.id}`}
+                      className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
+                    >
+                      View Details
+                      <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  )}
                 </div>
               </div>
             </motion.div>

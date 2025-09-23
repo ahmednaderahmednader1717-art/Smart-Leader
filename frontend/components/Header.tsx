@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X, Lightbulb, Settings, Sun, Moon } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
+import { useSettings } from '@/lib/settingsContext'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
+  const { settings } = useSettings()
   
   // Only use theme on client side
   const themeContext = mounted ? useTheme() : null
@@ -41,8 +43,12 @@ const Header = () => {
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-gray-900 dark:text-white">SMART</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-white -mt-1">LEADER</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">
+                {settings.companyName.split(' ')[0] || 'SMART'}
+              </span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white -mt-1">
+                {settings.companyName.split(' ').slice(1).join(' ') || 'LEADER'}
+              </span>
             </div>
           </Link>
 

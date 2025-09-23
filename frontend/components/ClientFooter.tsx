@@ -2,27 +2,10 @@
 
 import Link from 'next/link'
 import { Lightbulb, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useSettings } from '@/lib/settingsContext'
 
 const ClientFooter = () => {
-  const [settings, setSettings] = useState({
-    companyName: 'Smart Leader Real Estate',
-    email: 'info@smartleader.com',
-    phone: '+20 123 456 7890',
-    location: '123 Business District, New Cairo, Egypt'
-  })
-
-  useEffect(() => {
-    // Load settings from localStorage on client side
-    try {
-      const savedSettings = localStorage.getItem('companySettings')
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings))
-      }
-    } catch (error) {
-      console.error('Failed to load company settings:', error)
-    }
-  }, [])
+  const { settings } = useSettings()
 
   return (
     <footer className="bg-gray-900 dark:bg-gray-950 text-white">

@@ -2,9 +2,10 @@
 
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { MapPin, Calendar, Square, Bed, Bath, Car, ArrowLeft, Share2, Heart } from 'lucide-react'
+import { MapPin, Calendar, Square, Bed, Bath, Car, ArrowLeft, Share2, Heart, Star } from 'lucide-react'
 import Link from 'next/link'
 import { projectsService } from '@/lib/firebaseServices'
+import ProjectRating from './ProjectRating'
 
 interface ProjectDetailProps {
   projectId: string
@@ -31,6 +32,10 @@ interface Project {
   images: string[]
   createdAt: string
   views: number
+  rating?: {
+    average: number
+    count: number
+  }
 }
 
 const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
@@ -128,7 +133,11 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
             type: 'Apartment',
           },
           createdAt: new Date().toISOString(),
-          views: 0
+          views: 0,
+          rating: {
+            average: 4.5,
+            count: 23
+          }
         })
       } finally {
         setLoading(false)
@@ -240,9 +249,46 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8"
             >
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                {project.title}
-              </h1>
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {project.title}
+                </h1>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setIsFavorite(!isFavorite)}
+                    className={`p-2 rounded-full transition-colors ${
+                      isFavorite 
+                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' 
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400'
+                    }`}
+                  >
+                    <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
+                  </button>
+                  <button className="p-2 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-full hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors">
+                    <Share2 className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {project.rating && (
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="flex items-center space-x-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-4 w-4 ${
+                          star <= project.rating!.average
+                            ? 'text-yellow-400 fill-yellow-400'
+                            : 'text-gray-300 dark:text-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {project.rating.average.toFixed(1)} ({project.rating.count} reviews)
+                  </span>
+                </div>
+              )}
               
               <div className="flex items-center text-gray-600 dark:text-gray-300 mb-6">
                 <MapPin className="h-5 w-5 mr-2" />
@@ -309,7 +355,11 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
                 <div className="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-2">
                   {project.price}
                 </div>
-                <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-sm font-medium">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  project.status === 'Sold Out' 
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                    : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                }`}>
                   {project.status}
                 </span>
               </div>
@@ -330,18 +380,37 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
               </div>
               
               <div className="space-y-3">
-                <Link
-                  href="/contact"
-                  className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-700 transition-colors text-center block"
-                >
-                  Schedule a Visit
-                </Link>
-                <Link
-                  href="/contact"
-                  className="w-full border-2 border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400 py-3 px-4 rounded-lg font-semibold hover:bg-primary-600 hover:text-white transition-colors text-center block"
-                >
-                  Get More Info
-                </Link>
+                {project.status === 'Sold Out' ? (
+                  <>
+                    <button
+                      disabled
+                      className="w-full bg-gray-400 dark:bg-gray-600 text-gray-200 dark:text-gray-400 py-3 px-4 rounded-lg font-semibold cursor-not-allowed text-center block"
+                    >
+                      Project Sold Out
+                    </button>
+                    <button
+                      disabled
+                      className="w-full border-2 border-gray-400 dark:border-gray-600 text-gray-400 dark:text-gray-500 py-3 px-4 rounded-lg font-semibold cursor-not-allowed text-center block"
+                    >
+                      No Longer Available
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/contact"
+                      className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-700 transition-colors text-center block"
+                    >
+                      Schedule a Visit
+                    </Link>
+                    <Link
+                      href="/contact"
+                      className="w-full border-2 border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400 py-3 px-4 rounded-lg font-semibold hover:bg-primary-600 hover:text-white transition-colors text-center block"
+                    >
+                      Get More Info
+                    </Link>
+                  </>
+                )}
               </div>
             </motion.div>
 
@@ -368,6 +437,19 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
                   <div>ahmed@smartleader.com</div>
                 </div>
               </div>
+            </motion.div>
+
+            {/* Rating Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <ProjectRating 
+                projectId={project.id}
+                currentRating={project.rating}
+                showFeedback={true}
+              />
             </motion.div>
           </div>
         </div>

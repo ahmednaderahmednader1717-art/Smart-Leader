@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Lightbulb, 
   MessageSquare, 
@@ -15,12 +15,32 @@ import {
   BarChart3,
   X,
   Info,
-  AlertCircle
+  AlertCircle,
+  Search,
+  Filter,
+  Download,
+  Upload,
+  RefreshCw,
+  Bell,
+  Calendar,
+  Users,
+  DollarSign,
+  MapPin,
+  Clock,
+  Star,
+  Activity,
+  Zap,
+  Target,
+  TrendingDown,
+  ArrowUpRight,
+  ArrowDownRight
 } from 'lucide-react'
 import { authService, projectsService, contactsService, adminService } from '@/lib/firebaseServices'
 import { useAuth } from '@/lib/useAuth'
 import { useToastContext } from './ToastProvider'
+import { useSettings } from '@/lib/settingsContext'
 import ImageUpload from './ImageUpload'
+import ProjectCharts from './ProjectCharts'
 
 interface Project {
   id: number
@@ -43,6 +63,10 @@ interface Project {
   images: string[]
   createdAt: string
   views: number
+  rating?: {
+    average: number
+    count: number
+  }
 }
 
 interface Contact {
@@ -58,6 +82,7 @@ interface Contact {
 const AdminDashboard = () => {
   const { success, error, warning, info } = useToastContext()
   const { user, loading, login, logout, isAdmin, isAuthenticated } = useAuth()
+  const { settings, updateSettings, isOnline } = useSettings()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [projects, setProjects] = useState<Project[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -65,12 +90,6 @@ const AdminDashboard = () => {
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null)
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
-  const [settings, setSettings] = useState({
-    companyName: 'Smart Leader Real Estate',
-    email: 'info@smartleader.com',
-    phone: '+20 123 456 7890',
-    location: '123 Business District, New Cairo, Egypt'
-  })
   const [newProject, setNewProject] = useState({
     title: '',
     description: '',
@@ -94,26 +113,34 @@ const AdminDashboard = () => {
     projects: { total: 0, available: 0, completed: 0, featured: 0 },
     contacts: { total: 0, new: 0, resolved: 0 }
   })
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [sortBy, setSortBy] = useState('newest')
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
 
   // Load dashboard data when authenticated
   useEffect(() => {
     if (isAuthenticated && isAdmin()) {
       loadDashboardData()
     }
-    
-    // Load saved settings
-    const savedSettings = localStorage.getItem('companySettings')
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings)
-        setSettings(parsedSettings)
-      } catch (err) {
-        console.error('Failed to parse saved settings:', err)
-      }
-    }
   }, [])
 
+  // Auto-refresh effect
+  useEffect(() => {
+    if (!autoRefreshEnabled || !isAuthenticated || !isAdmin()) return
+
+    const interval = setInterval(() => {
+      loadDashboardData()
+    }, 30000) // Refresh every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [autoRefreshEnabled, isAuthenticated])
+
   const loadDashboardData = async () => {
+    setIsRefreshing(true)
     try {
       // Load data from Firebase
       const [projectsResult, contactsResult, statsResult] = await Promise.allSettled([
@@ -158,7 +185,11 @@ const AdminDashboard = () => {
           features: ['تشطيب فاخر', 'إطلالة رائعة'],
           images: [],
           createdAt: new Date().toISOString(),
-          views: 150
+          views: 150,
+          rating: {
+            average: 4.5,
+            count: 23
+          }
         },
         {
           id: 2,
@@ -180,7 +211,11 @@ const AdminDashboard = () => {
           features: ['حديقة خاصة', 'مسبح'],
           images: [],
           createdAt: new Date().toISOString(),
-          views: 89
+          views: 89,
+          rating: {
+            average: 4.8,
+            count: 15
+          }
         }
       ]
 
@@ -211,6 +246,8 @@ const AdminDashboard = () => {
         projects: { total: 2, available: 1, completed: 0, featured: 0 },
         contacts: { total: 2, new: 1, resolved: 1 }
       })
+    } finally {
+      setIsRefreshing(false)
     }
   }
 
@@ -343,6 +380,11 @@ const AdminDashboard = () => {
         setShowAddProject(false)
         
         success(editingProjectId ? 'Project Updated Successfully!' : 'Project Added Successfully!', 'Changes saved to database')
+        
+        // Auto-refresh after successful operation
+        setTimeout(() => {
+          loadDashboardData()
+        }, 1000)
       } else {
         error('Operation Failed', result.error || 'An unexpected error occurred')
       }
@@ -386,6 +428,11 @@ const AdminDashboard = () => {
           // Reload projects from Firebase
           await loadDashboardData()
           success('Project Deleted Successfully!', 'Project removed from database')
+          
+          // Auto-refresh after successful operation
+          setTimeout(() => {
+            loadDashboardData()
+          }, 1000)
         } else {
           error('Delete Failed', result.error || 'An unexpected error occurred')
         }
@@ -420,23 +467,22 @@ const AdminDashboard = () => {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const result = await adminService.saveSettings(settings)
-      if (result.success) {
-        success('Settings Saved Successfully!', 'System settings updated and will be applied across the site')
-        console.log('Settings saved:', settings)
-      } else {
-        error('Save Failed', result.error || 'Failed to save settings')
-      }
+      // Update settings using the context
+      await updateSettings(settings)
+      success('Settings Saved Successfully!', 'System settings updated and will be applied across the site')
+      console.log('Settings saved:', settings)
+      
+      // Auto-refresh after successful operation
+      setTimeout(() => {
+        loadDashboardData()
+      }, 1000)
     } catch (err) {
       error('Save Failed', 'Failed to save settings. Please try again.')
     }
   }
 
   const handleSettingsChange = (field: string, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      [field]: value
-    }))
+    updateSettings({ [field]: value })
   }
 
   // Contact management functions
@@ -537,6 +583,11 @@ Smart Leader Team`
       if (result.success) {
         await loadDashboardData() // Reload contacts
         success('Status Updated!', 'Contact marked as read')
+        
+        // Auto-refresh after successful operation
+        setTimeout(() => {
+          loadDashboardData()
+        }, 1000)
       } else {
         error('Update Failed', result.error || 'Failed to update status')
       }
@@ -553,6 +604,11 @@ Smart Leader Team`
         if (result.success) {
           await loadDashboardData() // Reload contacts
           success('Contact Deleted!', 'Contact message removed')
+          
+          // Auto-refresh after successful operation
+          setTimeout(() => {
+            loadDashboardData()
+          }, 1000)
         } else {
           error('Delete Failed', result.error || 'Failed to delete contact')
         }
@@ -561,6 +617,81 @@ Smart Leader Team`
         error('Delete Error', 'Please try again')
       }
     }
+  }
+
+  // Enhanced filtering and sorting functions
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.location.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesFilter = filterStatus === 'all' || project.status === filterStatus
+    return matchesSearch && matchesFilter
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      case 'oldest':
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      case 'views':
+        return b.views - a.views
+      case 'title':
+        return a.title.localeCompare(b.title)
+      default:
+        return 0
+    }
+  })
+
+  const filteredContacts = contacts.filter(contact => {
+    const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         contact.message.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesFilter = filterStatus === 'all' || contact.status === filterStatus
+    return matchesSearch && matchesFilter
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      case 'oldest':
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      case 'name':
+        return a.name.localeCompare(b.name)
+      default:
+        return 0
+    }
+  })
+
+  // Export functions
+  const exportProjects = () => {
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Title,Location,Price,Status,Views,Created\n" +
+      filteredProjects.map(p => 
+        `"${p.title}","${p.location}","${p.price}","${p.status}",${p.views},"${new Date(p.createdAt).toLocaleDateString()}"`
+      ).join("\n")
+    
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement("a")
+    link.setAttribute("href", encodedUri)
+    link.setAttribute("download", "projects.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    success('Export Successful!', 'Projects data exported to CSV')
+  }
+
+  const exportContacts = () => {
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Name,Email,Phone,Status,Message,Created\n" +
+      filteredContacts.map(c => 
+        `"${c.name}","${c.email}","${c.phone}","${c.status}","${c.message.replace(/"/g, '""')}","${new Date(c.createdAt).toLocaleDateString()}"`
+      ).join("\n")
+    
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement("a")
+    link.setAttribute("href", encodedUri)
+    link.setAttribute("download", "contacts.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    success('Export Successful!', 'Contacts data exported to CSV')
   }
 
   // Show loading while checking authentication
@@ -631,28 +762,122 @@ Smart Leader Team`
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
+      {/* Enhanced Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+              </motion.div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
                   Smart Leader Dashboard
                 </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  Admin
-                </p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    Admin Panel
+                  </p>
+                  <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} 
+                       title={isOnline ? 'Connected to Firebase' : 'Offline Mode'} />
+                </div>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-1 sm:space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
+            
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              {/* Auto-refresh Toggle */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+                className={`flex items-center space-x-1 sm:space-x-2 px-2 py-1 rounded-md transition-colors ${
+                  autoRefreshEnabled 
+                    ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30' 
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                title={autoRefreshEnabled ? 'Auto-refresh enabled (30s)' : 'Auto-refresh disabled'}
+              >
+                <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">
+                  {autoRefreshEnabled ? 'Auto ON' : 'Auto OFF'}
+                </span>
+              </motion.button>
+
+              {/* Manual Refresh Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={loadDashboardData}
+                disabled={isRefreshing}
+                className="flex items-center space-x-1 sm:space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                title="Manual Refresh"
+              >
+                <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </motion.button>
+
+              {/* Notifications */}
+              <div className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="flex items-center space-x-1 sm:space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+                  title="Notifications"
+                >
+                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
+                  )}
+                  <span className="hidden sm:inline">Notifications</span>
+                </motion.button>
+
+                {/* Notifications Dropdown */}
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-50"
+                    >
+                      <div className="p-4 border-b dark:border-gray-700">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                            No notifications
+                          </div>
+                        ) : (
+                          notifications.map((notification, index) => (
+                            <div key={index} className="p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                              <p className="text-sm text-gray-900 dark:text-white">{notification}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Logout Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="flex items-center space-x-1 sm:space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Logout</span>
+              </motion.button>
+            </div>
           </div>
         </div>
       </header>
@@ -684,55 +909,106 @@ Smart Leader Team`
         {/* Dashboard Content */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* Stats Cards */}
+            {/* Auto-refresh Status */}
+            {autoRefreshEnabled && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3"
+              >
+                <div className="flex items-center space-x-2">
+                  <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                    Auto-refresh enabled - Data updates every 30 seconds
+                  </span>
+                </div>
+              </motion.div>
+            )}
+            {/* Enhanced Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow"
+              >
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Total Projects</p>
                     <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.projects.total}</p>
+                    <div className="flex items-center mt-1">
+                      <ArrowUpRight className="h-3 w-3 text-green-500" />
+                      <span className="text-xs text-green-500 ml-1">+12%</span>
+                    </div>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow"
+              >
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Available Projects</p>
                     <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.projects.available}</p>
+                    <div className="flex items-center mt-1">
+                      <ArrowUpRight className="h-3 w-3 text-green-500" />
+                      <span className="text-xs text-green-500 ml-1">+8%</span>
+                    </div>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
+                    <Target className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow"
+              >
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Total Messages</p>
                     <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.contacts.total}</p>
+                    <div className="flex items-center mt-1">
+                      <ArrowUpRight className="h-3 w-3 text-green-500" />
+                      <span className="text-xs text-green-500 ml-1">+25%</span>
+                    </div>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow"
+              >
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 truncate">New Messages</p>
                     <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.contacts.new}</p>
+                    <div className="flex items-center mt-1">
+                      <ArrowUpRight className="h-3 w-3 text-orange-500" />
+                      <span className="text-xs text-orange-500 ml-1">+5%</span>
+                    </div>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
+                    <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Recent Projects */}
@@ -763,6 +1039,9 @@ Smart Leader Team`
                 )}
               </div>
             </div>
+
+            {/* Project Analytics Charts */}
+            <ProjectCharts projects={projects} />
 
             {/* Recent Contacts */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
@@ -800,6 +1079,75 @@ Smart Leader Team`
         {/* Projects Tab */}
         {activeTab === 'projects' && (
           <div className="space-y-6">
+            {/* Enhanced Projects Header with Search and Filters */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Projects Management</h2>
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search projects..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-full sm:w-64"
+                    />
+                  </div>
+
+                  {/* Filter */}
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="Available">Available</option>
+                    <option value="Under Construction">Under Construction</option>
+                    <option value="Coming Soon">Coming Soon</option>
+                    <option value="Sold Out">Sold Out</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+
+                  {/* Sort */}
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="views">Most Views</option>
+                    <option value="title">Title A-Z</option>
+                  </select>
+
+                  {/* Export Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={exportProjects}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Export</span>
+                  </motion.button>
+
+                  {/* Add Project Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowAddProject(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add Project</span>
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+
             {/* Add Project Modal */}
             {showAddProject && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -901,9 +1249,10 @@ Smart Leader Team`
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         >
                           <option value="Available">Available</option>
-                          <option value="Completed">Completed</option>
                           <option value="Under Construction">Under Construction</option>
                           <option value="Coming Soon">Coming Soon</option>
+                          <option value="Sold Out">Sold Out</option>
+                          <option value="Completed">Completed</option>
                         </select>
                       </div>
                     </div>
@@ -1081,14 +1430,12 @@ Smart Leader Team`
             
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Projects List</h2>
-                <button 
-                  onClick={() => setShowAddProject(true)}
-                  className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add Project</span>
-                </button>
+                <div>
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Projects List</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Showing {filteredProjects.length} of {projects.length} projects
+                  </p>
+                </div>
               </div>
             
               {/* Desktop Table */}
@@ -1103,14 +1450,14 @@ Smart Leader Team`
                     </tr>
                   </thead>
                   <tbody>
-                    {projects.length === 0 ? (
+                    {filteredProjects.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                          No projects yet
+                          {projects.length === 0 ? 'No projects yet' : 'No projects match your search criteria'}
                         </td>
                       </tr>
                     ) : (
-                      projects.map((project) => (
+                      filteredProjects.map((project) => (
                         <tr key={project.id} className="border-b dark:border-gray-700">
                           <td className="py-3 px-4 text-gray-900 dark:text-white">{project.title}</td>
                           <td className="py-3 px-4">
@@ -1119,12 +1466,11 @@ Smart Leader Team`
                                 ? 'bg-green-100 text-green-800' 
                                 : project.status === 'Completed'
                                 ? 'bg-blue-100 text-blue-800'
+                                : project.status === 'Sold Out'
+                                ? 'bg-red-100 text-red-800'
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}>
-                              {project.status === 'Available' ? 'Available' : 
-                               project.status === 'Completed' ? 'Completed' :
-                               project.status === 'Under Construction' ? 'Under Construction' :
-                               project.status === 'Coming Soon' ? 'Coming Soon' : project.status}
+                              {project.status}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-gray-900 dark:text-white">{project.views}</td>
@@ -1155,12 +1501,12 @@ Smart Leader Team`
 
               {/* Mobile Cards */}
               <div className="lg:hidden space-y-4">
-                {projects.length === 0 ? (
+                {filteredProjects.length === 0 ? (
                   <p className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    No projects yet
+                    {projects.length === 0 ? 'No projects yet' : 'No projects match your search criteria'}
                   </p>
                 ) : (
-                  projects.map((project) => (
+                  filteredProjects.map((project) => (
                     <div key={project.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                       <div className="space-y-3">
                         <div>
@@ -1172,12 +1518,11 @@ Smart Leader Team`
                               ? 'bg-green-100 text-green-800' 
                               : project.status === 'Completed'
                               ? 'bg-blue-100 text-blue-800'
+                              : project.status === 'Sold Out'
+                              ? 'bg-red-100 text-red-800'
                               : 'bg-yellow-100 text-yellow-800'
                           }`}>
-                            {project.status === 'Available' ? 'Available' : 
-                             project.status === 'Completed' ? 'Completed' :
-                             project.status === 'Under Construction' ? 'Under Construction' :
-                             project.status === 'Coming Soon' ? 'Coming Soon' : project.status}
+                            {project.status}
                           </span>
                           <span className="text-xs text-gray-500 dark:text-gray-400">{project.views} views</span>
                         </div>
@@ -1208,8 +1553,68 @@ Smart Leader Team`
 
         {/* Contacts Tab */}
         {activeTab === 'contacts' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-6">Message Management</h2>
+          <div className="space-y-6">
+            {/* Enhanced Contacts Header with Search and Filters */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                <div>
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Message Management</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Showing {filteredContacts.length} of {contacts.length} messages
+                  </p>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search messages..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-full sm:w-64"
+                    />
+                  </div>
+
+                  {/* Filter */}
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="New">New Messages</option>
+                    <option value="Read">Read Messages</option>
+                    <option value="Resolved">Resolved</option>
+                  </select>
+
+                  {/* Sort */}
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="name">Name A-Z</option>
+                  </select>
+
+                  {/* Export Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={exportContacts}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Export</span>
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
             
             {/* Desktop Table */}
             <div className="hidden lg:block overflow-x-auto">
@@ -1224,14 +1629,14 @@ Smart Leader Team`
                   </tr>
                 </thead>
                 <tbody>
-                  {contacts.length === 0 ? (
+                  {filteredContacts.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No messages yet
+                        {contacts.length === 0 ? 'No messages yet' : 'No messages match your search criteria'}
                       </td>
                     </tr>
                   ) : (
-                    contacts.map((contact) => (
+                    filteredContacts.map((contact) => (
                       <tr key={contact.id} className="border-b dark:border-gray-700">
                         <td className="py-3 px-4 text-gray-900 dark:text-white">{contact.name}</td>
                         <td className="py-3 px-4 text-gray-900 dark:text-white">{contact.email}</td>
@@ -1281,12 +1686,12 @@ Smart Leader Team`
 
             {/* Mobile Cards */}
             <div className="lg:hidden space-y-4">
-              {contacts.length === 0 ? (
+              {filteredContacts.length === 0 ? (
                 <p className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  No messages yet
+                  {contacts.length === 0 ? 'No messages yet' : 'No messages match your search criteria'}
                 </p>
               ) : (
-                contacts.map((contact) => (
+                filteredContacts.map((contact) => (
                   <div key={contact.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                     <div className="space-y-3">
                       <div>
@@ -1333,6 +1738,7 @@ Smart Leader Team`
                 ))
               )}
             </div>
+            </div>
           </div>
         )}
 
@@ -1340,7 +1746,15 @@ Smart Leader Team`
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">System Settings</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">System Settings</h2>
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isOnline ? 'Synced with Firebase' : 'Offline Mode'}
+                </span>
+              </div>
+            </div>
             
             <form onSubmit={handleSaveSettings} className="space-y-6">
               <div>

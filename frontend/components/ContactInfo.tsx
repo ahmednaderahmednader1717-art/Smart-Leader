@@ -2,27 +2,10 @@
 
 import { motion } from 'framer-motion'
 import { MapPin, Phone, Mail, Clock, MessageCircle, Users, Star, Award, Shield } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useSettings } from '@/lib/settingsContext'
 
 const ContactInfo = () => {
-  const [settings, setSettings] = useState({
-    companyName: 'Smart Leader Real Estate',
-    email: 'info@smartleader.com',
-    phone: '+20 123 456 7890',
-    location: '123 Business District, New Cairo, Egypt'
-  })
-
-  useEffect(() => {
-    // Load settings from localStorage on client side
-    try {
-      const savedSettings = localStorage.getItem('companySettings')
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings))
-      }
-    } catch (error) {
-      console.error('Failed to load company settings:', error)
-    }
-  }, [])
+  const { settings } = useSettings()
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
