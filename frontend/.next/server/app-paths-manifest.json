@@ -1,7 +1,11 @@
 {
-  "/admin/page": "app/admin/page.js",
-  "/previous-projects/page": "app/previous-projects/page.js",
-  "/contact/page": "app/contact/page.js",
+  "/not-found": "app/not-found.js",
   "/projects/page": "app/projects/page.js",
-  "/projects/[id]/page": "app/projects/[id]/page.js"
+  "/projects/[id]/page": "app/projects/[id]/page.js",
+  "/contact/page": "app/contact/page.js",
+  "/previous-projects/page": "app/previous-projects/page.js",
+  "/page": "app/page.js",
+  "/about/page": "app/about/page.js",
+  "/services/page": "app/services/page.js",
+  "/admin/page": "app/admin/page.js"
 }

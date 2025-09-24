@@ -1,5 +1,12 @@
 {
   "pages": {
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendors.js",
+      "static/chunks/main-app.js",
+      "static/chunks/_app-pages-browser_lib_firebaseServices_js.js",
+      "static/chunks/app/page.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/vendors.js",
@@ -7,13 +14,6 @@
       "static/chunks/_app-pages-browser_components_ToastProvider_tsx-_app-pages-browser_lib_settingsContext_tsx.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
-    ],
-    "/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/vendors.js",
-      "static/chunks/main-app.js",
-      "static/chunks/_app-pages-browser_lib_firebaseServices_js.js",
-      "static/chunks/app/page.js"
     ],
     "/projects/page": [
       "static/chunks/webpack.js",
@@ -49,19 +49,19 @@
       "static/chunks/main-app.js",
       "static/chunks/app/services/page.js"
     ],
-    "/projects/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/vendors.js",
-      "static/chunks/main-app.js",
-      "static/chunks/_app-pages-browser_lib_firebaseServices_js.js",
-      "static/chunks/app/projects/[id]/page.js"
-    ],
     "/previous-projects/page": [
       "static/chunks/webpack.js",
       "static/chunks/vendors.js",
       "static/chunks/main-app.js",
       "static/chunks/_app-pages-browser_lib_firebaseServices_js.js",
       "static/chunks/app/previous-projects/page.js"
+    ],
+    "/projects/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendors.js",
+      "static/chunks/main-app.js",
+      "static/chunks/_app-pages-browser_lib_firebaseServices_js.js",
+      "static/chunks/app/projects/[id]/page.js"
     ]
   }
 }
