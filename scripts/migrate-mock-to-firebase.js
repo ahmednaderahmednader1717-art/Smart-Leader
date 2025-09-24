@@ -451,3 +451,4 @@ module.exports = {
   setupDefaultSettings,
   runMigration
 };
+

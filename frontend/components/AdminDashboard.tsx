@@ -33,9 +33,11 @@ import {
   Target,
   TrendingDown,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ArrowRight
 } from 'lucide-react'
 import { authService, projectsService, contactsService, adminService } from '@/lib/firebaseServices'
+import { auth } from '@/lib/firebase'
 import { useAuth } from '@/lib/useAuth'
 import { useToastContext } from './ToastProvider'
 import { useSettings } from '@/lib/settingsContext'
@@ -120,6 +122,10 @@ const AdminDashboard = () => {
   const [notifications, setNotifications] = useState([])
   const [showNotifications, setShowNotifications] = useState(false)
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
+  const [isSendingReset, setIsSendingReset] = useState(false)
 
   // Load dashboard data when authenticated
   useEffect(() => {
@@ -253,6 +259,7 @@ const AdminDashboard = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoggingIn(true)
     try {
       const formData = new FormData(e.currentTarget as HTMLFormElement)
       const email = formData.get('email') as string
@@ -291,25 +298,54 @@ const AdminDashboard = () => {
         } else if (result.code === 'auth/user-not-found') {
           error('User Not Found', 'No account found with this email address. Please add the user in Firebase Console first.')
         } else if (result.code === 'auth/wrong-password') {
-          error('Wrong Password', 'The password is incorrect. Please check the password in Firebase Console.')
+          error('Wrong Password', 'The password is incorrect. Please check your password and try again.')
         } else if (result.code === 'auth/too-many-requests') {
           error('Too Many Attempts', 'Too many failed login attempts. Please try again later.')
         } else if (result.code === 'auth/invalid-email') {
           error('Invalid Email', 'Please enter a valid email address.')
         } else if (result.code === 'auth/user-disabled') {
-          error('Account Disabled', 'This account has been disabled.')
+          error('Account Disabled', 'This account has been disabled. Please contact support.')
         } else if (result.code === 'auth/operation-not-allowed') {
           error('Operation Not Allowed', 'Email/Password authentication is not enabled. Please enable it in Firebase Console.')
+        } else if (result.code === 'auth/user-not-found') {
+          error('User Not Found', 'No account found with this email address. Please check your email or contact support.')
+        } else if (result.code === 'auth/network-request-failed') {
+          error('Network Error', 'Please check your internet connection and try again.')
         } else {
-          error('Login Error', result.error || 'Please check your credentials')
+          error('Login Error', result.error || 'Please check your credentials and try again.')
         }
       }
     } catch (err) {
       console.error('Login error:', err)
       error('Connection Error', 'Please check your internet connection')
+    } finally {
+      setIsLoggingIn(false)
     }
   }
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSendingReset(true)
+    try {
+      // Import sendPasswordResetEmail from Firebase
+      const { sendPasswordResetEmail } = await import('firebase/auth')
+      await sendPasswordResetEmail(auth, forgotPasswordEmail)
+      success('Reset Email Sent', 'Password reset email has been sent to your email address.')
+      setShowForgotPassword(false)
+      setForgotPasswordEmail('')
+    } catch (error: any) {
+      console.error('Password reset error:', error)
+      if (error.code === 'auth/user-not-found') {
+        error('User Not Found', 'No account found with this email address.')
+      } else if (error.code === 'auth/invalid-email') {
+        error('Invalid Email', 'Please enter a valid email address.')
+      } else {
+        error('Reset Failed', 'Failed to send reset email. Please try again.')
+      }
+    } finally {
+      setIsSendingReset(false)
+    }
+  }
 
   const handleLogout = async () => {
     try {
@@ -708,52 +744,226 @@ Smart Leader Team`
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"
+          transition={{ duration: 0.6 }}
+          className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700"
         >
+          {/* Header */}
           <div className="text-center mb-8">
-            <Lightbulb className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900">Smart Leader</h1>
-            <p className="text-gray-600">Admin Dashboard Login</p>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="relative mb-6"
+            >
+              <div className="absolute inset-0 bg-blue-600 rounded-full blur-lg opacity-20"></div>
+              <Lightbulb className="relative h-16 w-16 text-blue-600 mx-auto" />
+            </motion.div>
+            
+            <motion.h1 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-3xl font-bold text-gray-900 dark:text-white mb-2"
+            >
+              Smart Leader
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-gray-600 dark:text-gray-400"
+            >
+              Admin Dashboard Login
+            </motion.p>
           </div>
           
-          <form onSubmit={handleLogin} className="space-y-6">
+          {/* Login Form */}
+          <motion.form 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            onSubmit={handleLogin} 
+            className="space-y-6"
+          >
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Email Address
               </label>
-              <input
-                type="email"
-                name="email"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="admin@smartleader.com"
-              />
+              <div className="relative">
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+                  placeholder="admin@smartleader.com"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                  </svg>
+                </div>
+              </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Password
               </label>
-              <input
-                type="password"
-                name="password"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="Enter your password"
-              />
+              <div className="relative">
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+                  placeholder="Enter your password"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+              </div>
             </div>
             
-            <button
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                  Remember me
+                </label>
+              </div>
+              <div className="text-sm">
+                <button 
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              disabled={isLoggingIn}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
-              Sign In
-            </button>
-          </form>
+              {isLoggingIn ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Signing In...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="h-5 w-5" />
+                </>
+              )}
+            </motion.button>
+          </motion.form>
+          
+          {/* Forgot Password Modal */}
+          <AnimatePresence>
+            {showForgotPassword && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Reset Password
+                    </h3>
+                    <button
+                      onClick={() => setShowForgotPassword(false)}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Enter your email address and we'll send you a link to reset your password.
+                  </p>
+                  
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="Enter your email"
+                      />
+                    </div>
+                    
+                    <div className="flex space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(false)}
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSendingReset}
+                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                      >
+                        {isSendingReset ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Sending...</span>
+                          </>
+                        ) : (
+                          'Send Reset Email'
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Footer */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="mt-8 text-center"
+          >
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Secure access to Smart Leader Admin Dashboard
+            </p>
+            <div className="mt-2 flex items-center justify-center space-x-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-green-600 dark:text-green-400">Firebase Connected</span>
+            </div>
+          </motion.div>
           
         </motion.div>
       </div>
