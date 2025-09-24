@@ -330,7 +330,7 @@ const AdminDashboard = () => {
       // Import sendPasswordResetEmail from Firebase
       const { sendPasswordResetEmail } = await import('firebase/auth')
       await sendPasswordResetEmail(auth, forgotPasswordEmail)
-      success('Reset Email Sent', 'Password reset email has been sent to your email address.')
+      success('Reset Email Sent', `Password reset email has been sent to ${forgotPasswordEmail}. Please check your inbox and spam folder.`)
       setShowForgotPassword(false)
       setForgotPasswordEmail('')
     } catch (error: any) {
@@ -339,8 +339,12 @@ const AdminDashboard = () => {
         error('User Not Found', 'No account found with this email address.')
       } else if (error.code === 'auth/invalid-email') {
         error('Invalid Email', 'Please enter a valid email address.')
+      } else if (error.code === 'auth/too-many-requests') {
+        error('Too Many Requests', 'Too many password reset attempts. Please wait before trying again.')
+      } else if (error.code === 'auth/network-request-failed') {
+        error('Network Error', 'Please check your internet connection and try again.')
       } else {
-        error('Reset Failed', 'Failed to send reset email. Please try again.')
+        error('Reset Failed', `Failed to send reset email: ${error.message}. Please try again or contact support.`)
       }
     } finally {
       setIsSendingReset(false)
@@ -904,6 +908,21 @@ Smart Leader Team`
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
                     Enter your email address and we'll send you a link to reset your password.
                   </p>
+                  
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                    <div className="flex items-start space-x-2">
+                      <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-blue-800 dark:text-blue-200">
+                        <p className="font-medium mb-1">Important:</p>
+                        <ul className="space-y-1 text-xs">
+                          <li>• Check your spam/junk folder</li>
+                          <li>• Email may take 1-2 minutes to arrive</li>
+                          <li>• Link expires in 1 hour</li>
+                          <li>• Make sure the email is registered in Firebase</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                   
                   <form onSubmit={handleForgotPassword} className="space-y-4">
                     <div>
