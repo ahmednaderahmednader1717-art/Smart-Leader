@@ -18,6 +18,10 @@ interface Project {
   price: string
   area: string
   completionDate: string
+  rating?: {
+    average: number
+    count: number
+  }
 }
 
 const ProjectsGrid = () => {
