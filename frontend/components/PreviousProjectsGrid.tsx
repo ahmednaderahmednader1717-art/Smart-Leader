@@ -27,6 +27,10 @@ interface Project {
   images: string[]
   createdAt: string
   views: number
+  rating?: {
+    average: number
+    count: number
+  }
 }
 
 const PreviousProjectsGrid = () => {
