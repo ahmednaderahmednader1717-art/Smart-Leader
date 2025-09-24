@@ -37,7 +37,6 @@ import {
   ArrowRight
 } from 'lucide-react'
 import { authService, projectsService, contactsService, adminService } from '@/lib/firebaseServices'
-import { auth } from '@/lib/firebase'
 import { useAuth } from '@/lib/useAuth'
 import { useToastContext } from './ToastProvider'
 import { useSettings } from '@/lib/settingsContext'
@@ -123,12 +122,6 @@ const AdminDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false)
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
-  const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
-  const [isSendingReset, setIsSendingReset] = useState(false)
-  const [showManualReset, setShowManualReset] = useState(false)
-  const [manualResetEmail, setManualResetEmail] = useState('')
-  const [manualResetPassword, setManualResetPassword] = useState('')
 
   // Load dashboard data when authenticated
   useEffect(() => {
@@ -326,76 +319,6 @@ const AdminDashboard = () => {
     }
   }
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSendingReset(true)
-    try {
-      console.log('Starting password reset for:', forgotPasswordEmail)
-      console.log('Auth object:', auth)
-      
-      // Import sendPasswordResetEmail from Firebase
-      const { sendPasswordResetEmail } = await import('firebase/auth')
-      console.log('sendPasswordResetEmail imported successfully')
-      
-      const result = await sendPasswordResetEmail(auth, forgotPasswordEmail)
-      console.log('Password reset email sent successfully:', result)
-      
-      success('Reset Email Sent', `Password reset email has been sent to ${forgotPasswordEmail}. Please check your inbox and spam folder.`)
-      setShowForgotPassword(false)
-      setForgotPasswordEmail('')
-    } catch (error: any) {
-      console.error('Password reset error:', error)
-      if (error.code === 'auth/user-not-found') {
-        error('User Not Found', 'No account found with this email address.')
-      } else if (error.code === 'auth/invalid-email') {
-        error('Invalid Email', 'Please enter a valid email address.')
-      } else if (error.code === 'auth/too-many-requests') {
-        error('Too Many Requests', 'Too many password reset attempts. Please wait before trying again.')
-      } else if (error.code === 'auth/network-request-failed') {
-        error('Network Error', 'Please check your internet connection and try again.')
-      } else {
-        error('Reset Failed', `Failed to send reset email: ${error.message}. Please try again or contact support.`)
-      }
-      
-      // Log detailed error information
-      console.error('Detailed error info:', {
-        code: error.code,
-        message: error.message,
-        email: forgotPasswordEmail,
-        authDomain: auth.app.options.authDomain
-      })
-    } finally {
-      setIsSendingReset(false)
-    }
-  }
-
-  const handleManualPasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      // This is a workaround - we'll create a new user with the same email
-      // and then the user can login with the new password
-      const { createUserWithEmailAndPassword, deleteUser } = await import('firebase/auth')
-      
-      // First, try to create a new user (this will fail if user exists, which is what we want)
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, manualResetEmail, manualResetPassword)
-        success('Password Reset', `New password set for ${manualResetEmail}. You can now login with the new password.`)
-        setShowManualReset(false)
-        setManualResetEmail('')
-        setManualResetPassword('')
-      } catch (createError: any) {
-        if (createError.code === 'auth/email-already-in-use') {
-          // User exists, we can't reset password this way
-          error('User Exists', 'This email is already registered. Please use the "Forgot Password" option or contact support.')
-        } else {
-          throw createError
-        }
-      }
-    } catch (error: any) {
-      console.error('Manual reset error:', error)
-      error('Reset Failed', `Failed to reset password: ${error.message}`)
-    }
-  }
 
   const handleLogout = async () => {
     try {
@@ -879,28 +802,17 @@ Smart Leader Team`
               </div>
             </div>
             
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                  Remember me
-                </label>
-              </div>
-              <div className="text-sm">
-            <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                >
-                  Forgot password?
-                </button>
-              </div>
+            {/* Remember Me */}
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                Remember me
+              </label>
             </div>
             
             <motion.button
@@ -924,200 +836,6 @@ Smart Leader Team`
             </motion.button>
           </motion.form>
           
-          {/* Forgot Password Modal */}
-          <AnimatePresence>
-            {showForgotPassword && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              >
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md"
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Reset Password
-                    </h3>
-                    <button
-                      onClick={() => setShowForgotPassword(false)}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      <X className="h-5 w-5" />
-            </button>
-                  </div>
-                  
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    Enter your email address and we'll send you a link to reset your password.
-                  </p>
-                  
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
-                    <div className="flex items-start space-x-2">
-                      <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm text-blue-800 dark:text-blue-200">
-                        <p className="font-medium mb-1">Important:</p>
-                        <ul className="space-y-1 text-xs">
-                          <li>• Check your spam/junk folder</li>
-                          <li>• Email may take 1-2 minutes to arrive</li>
-                          <li>• Link expires in 1 hour</li>
-                          <li>• Make sure the email is registered in Firebase</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <form onSubmit={handleForgotPassword} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        value={forgotPasswordEmail}
-                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="Enter your email"
-                      />
-                    </div>
-                    
-                    <div className="flex space-x-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowForgotPassword(false)}
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isSendingReset}
-                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                      >
-                        {isSendingReset ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Sending...</span>
-                          </>
-                        ) : (
-                          'Send Reset Email'
-                        )}
-                      </button>
-                    </div>
-                    
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        If email reset doesn't work, try manual reset:
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowForgotPassword(false)
-                          setShowManualReset(true)
-                        }}
-                        className="w-full px-4 py-2 border border-orange-300 dark:border-orange-600 text-orange-700 dark:text-orange-300 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                      >
-                        Manual Password Reset
-                      </button>
-                    </div>
-          </form>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Manual Password Reset Modal */}
-          <AnimatePresence>
-            {showManualReset && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              >
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md"
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Manual Password Reset
-                    </h3>
-                    <button
-                      onClick={() => setShowManualReset(false)}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                  
-                  <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-4">
-                    <div className="flex items-start space-x-2">
-                      <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm text-orange-800 dark:text-orange-200">
-                        <p className="font-medium mb-1">Warning:</p>
-                        <p>This will create a new account if the email doesn't exist. Use only for testing or new accounts.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <form onSubmit={handleManualPasswordReset} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        value={manualResetEmail}
-                        onChange={(e) => setManualResetEmail(e.target.value)}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="Enter email address"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        New Password
-                      </label>
-                      <input
-                        type="password"
-                        value={manualResetPassword}
-                        onChange={(e) => setManualResetPassword(e.target.value)}
-                        required
-                        minLength={6}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="Enter new password (min 6 characters)"
-                      />
-                    </div>
-                    
-                    <div className="flex space-x-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowManualReset(false)}
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors"
-                      >
-                        Set New Password
-                      </button>
-                    </div>
-                  </form>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
           {/* Footer */}
           <motion.div 
             initial={{ opacity: 0 }}
@@ -1133,20 +851,6 @@ Smart Leader Team`
               <span className="text-xs text-green-600 dark:text-green-400">Firebase Connected</span>
             </div>
             
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                Need to manage users or reset passwords?
-              </p>
-              <a 
-                href="https://console.firebase.google.com/project/smart-leader-ff5ff/authentication/users"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-xs text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-              >
-                <Settings className="h-3 w-3 mr-1" />
-                Firebase Console
-              </a>
-            </div>
           </motion.div>
           
         </motion.div>
