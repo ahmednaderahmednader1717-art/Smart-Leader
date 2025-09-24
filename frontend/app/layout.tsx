@@ -6,6 +6,7 @@ import ClientFooter from '@/components/ClientFooter'
 import { ToastProvider } from '@/components/ToastProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { SettingsProvider } from '@/lib/settingsContext'
+import { registerServiceWorker } from '@/lib/serviceWorker'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -69,6 +70,23 @@ export default function RootLayout({
             </ToastProvider>
           </SettingsProvider>
         </ThemeProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   )

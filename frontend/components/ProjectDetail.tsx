@@ -49,7 +49,7 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
       try {
         const result = await projectsService.getProjects()
         if (result.success && result.data) {
-          const foundProject = result.data.find(p => p.id.toString() === projectId)
+          const foundProject = result.data.find((p: any) => p.id.toString() === projectId)
           if (foundProject) {
             setProject(foundProject)
             // Increment views when project is loaded
@@ -287,7 +287,7 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
                     ))}
                   </div>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {project.rating.average.toFixed(1)} ({project.rating.count} reviews)
+                    {project.rating?.average?.toFixed(1) || '0.0'} ({project.rating?.count || 0} reviews)
                   </span>
                 </div>
               )}

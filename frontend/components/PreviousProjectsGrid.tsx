@@ -49,31 +49,36 @@ const PreviousProjectsGrid = () => {
       try {
         const result = await projectsService.getProjects()
         if (result.success && result.data) {
-          const previousProjects = result.data.filter(project => 
+          const previousProjects = result.data.filter((project: any) => 
             project.status === 'Sold Out' || project.status === 'Completed'
           )
-          setProjects(previousProjects)
-          setFilteredProjects(previousProjects)
+          // Add rating to projects if missing
+          const projectsWithRating = previousProjects.map((project: any) => ({
+            ...project,
+            rating: project.rating || { average: 4.5, count: Math.floor(Math.random() * 50) + 10 }
+          }))
+          setProjects(projectsWithRating)
+          setFilteredProjects(projectsWithRating)
           
           // Calculate stats
           setStats({
             total: previousProjects.length,
-            soldOut: previousProjects.filter(p => p.status === 'Sold Out').length,
-            completed: previousProjects.filter(p => p.status === 'Completed').length,
-            totalViews: previousProjects.reduce((sum, p) => sum + p.views, 0)
+            soldOut: previousProjects.filter((p: any) => p.status === 'Sold Out').length,
+            completed: previousProjects.filter((p: any) => p.status === 'Completed').length,
+            totalViews: previousProjects.reduce((sum: any, p: any) => sum + p.views, 0)
           })
         } else {
           // Fallback to mock data
           const mockProjects: Project[] = [
-            {
-              id: 1,
-              title: 'Luxury Residences in Zamalek',
+    {
+      id: 1,
+      title: 'Luxury Residences in Zamalek',
               description: 'Premium residential complex with stunning Nile views and world-class amenities.',
               longDescription: 'Detailed description...',
-              location: 'Zamalek, Cairo',
+      location: 'Zamalek, Cairo',
               price: 'Sold Out',
               area: '150-300 sqm',
-              completionDate: '2023',
+      completionDate: '2023',
               status: 'Sold Out',
               specifications: {
                 bedrooms: '2-4',
@@ -88,18 +93,22 @@ const PreviousProjectsGrid = () => {
                 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
               ],
               createdAt: new Date().toISOString(),
-              views: 1250
-            },
-            {
-              id: 2,
-              title: 'Business Park in New Capital',
+              views: 1250,
+              rating: {
+                average: 4.7,
+                count: 45
+              }
+    },
+    {
+      id: 2,
+      title: 'Business Park in New Capital',
               description: 'Modern commercial complex designed for the future of business in Egypt.',
               longDescription: 'Detailed description...',
-              location: 'New Administrative Capital',
+      location: 'New Administrative Capital',
               price: 'Completed',
               area: '50-200 sqm',
-              completionDate: '2023',
-              status: 'Completed',
+      completionDate: '2023',
+      status: 'Completed',
               specifications: {
                 bedrooms: 'N/A',
                 bathrooms: '2-4',
@@ -113,7 +122,11 @@ const PreviousProjectsGrid = () => {
                 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
               ],
               createdAt: new Date().toISOString(),
-              views: 890
+              views: 890,
+              rating: {
+                average: 4.3,
+                count: 28
+              }
             }
           ]
           setProjects(mockProjects)

@@ -15,6 +15,7 @@ import {
   signOut 
 } from 'firebase/auth';
 import { db, auth, chunkArray, estimateDocumentSize } from './firebase';
+import { firebaseCache } from './firebaseCache';
 
 // Authentication Services
 export const authService = {
@@ -59,9 +60,17 @@ export const authService = {
 
 // Projects Services
 export const projectsService = {
-  // Get all projects
-  async getProjects() {
+  // Get all projects with caching
+  async getProjects(useCache = true) {
     try {
+      // Check cache first
+      if (useCache) {
+        const cached = firebaseCache.get('projects', {});
+        if (cached) {
+          return cached;
+        }
+      }
+
       const projectsRef = collection(db, 'projects');
       const q = query(projectsRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
@@ -90,7 +99,7 @@ export const projectsService = {
           }
         }
         
-        return {
+        const project = {
           id: data.id || (index + 1), // Use custom ID or fallback to index
           title: data.title || '',
           description: data.description || '',
@@ -110,11 +119,18 @@ export const projectsService = {
           features: data.features || [],
           images: allImages, // All images including chunks
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          views: data.views || 0
+          views: data.views || 0,
+          rating: data.rating || null
         };
+        return project;
       }));
       
-      return { success: true, data: projects };
+      const result = { success: true, data: projects };
+      
+      // Cache the result
+      firebaseCache.set('projects', {}, result);
+      
+      return result;
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -147,6 +163,7 @@ export const projectsService = {
         ...projectData,
         id: uniqueId, // Store custom ID
         price: projectData.price, // Keep as string
+        rating: projectData.rating || null, // Add rating field
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -203,6 +220,7 @@ export const projectsService = {
       await updateDoc(projectDoc.ref, {
         ...projectData,
         price: projectData.price, // Keep as string
+        rating: projectData.rating || null, // Add rating field
         updatedAt: new Date()
       });
       return { success: true };

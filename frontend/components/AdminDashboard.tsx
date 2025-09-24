@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Lightbulb, 
@@ -42,6 +42,9 @@ import { useToastContext } from './ToastProvider'
 import { useSettings } from '@/lib/settingsContext'
 import ImageUpload from './ImageUpload'
 import ProjectCharts from './ProjectCharts'
+import ProjectsManagement from './ProjectsManagement'
+import AdvancedAnalytics from './AdvancedAnalytics'
+import PerformanceMonitor from './PerformanceMonitor'
 
 interface Project {
   id: number
@@ -108,7 +111,8 @@ const AdminDashboard = () => {
       type: ''
     },
     features: [] as string[],
-    images: [] as string[]
+    images: [] as string[],
+    rating: null as { average: number; count: number } | null
   })
   const [stats, setStats] = useState({
     projects: { total: 0, available: 0, completed: 0, featured: 0 },
@@ -123,12 +127,59 @@ const AdminDashboard = () => {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
+  // Memoized filtered projects
+  const filteredProjects = useMemo(() => {
+    return projects.filter(project => {
+      const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           project.location.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesFilter = filterStatus === 'all' || project.status === filterStatus
+      // Hide Sold Out projects from current projects (they should only appear in previous projects)
+      const isNotSoldOut = project.status !== 'Sold Out'
+      return matchesSearch && matchesFilter && isNotSoldOut
+    }).sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        case 'views':
+          return b.views - a.views
+        case 'title':
+          return a.title.localeCompare(b.title)
+        default:
+          return 0
+      }
+    })
+  }, [projects, searchTerm, filterStatus, sortBy])
+
+  // Memoized filtered contacts
+  const filteredContacts = useMemo(() => {
+    return contacts.filter(contact => {
+      const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           contact.message.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesFilter = filterStatus === 'all' || contact.status === filterStatus
+      return matchesSearch && matchesFilter
+    }).sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        case 'name':
+          return a.name.localeCompare(b.name)
+        default:
+          return 0
+      }
+    })
+  }, [contacts, searchTerm, filterStatus, sortBy])
+
   // Load dashboard data when authenticated
   useEffect(() => {
     if (isAuthenticated && isAdmin()) {
       loadDashboardData()
     }
-  }, [])
+  }, [isAuthenticated])
 
   // Auto-refresh effect
   useEffect(() => {
@@ -141,6 +192,11 @@ const AdminDashboard = () => {
     return () => clearInterval(interval)
   }, [autoRefreshEnabled, isAuthenticated])
 
+  // Debug projects state changes
+  // useEffect(() => {
+  //   console.log('Projects state changed:', projects)
+  // }, [projects])
+
   const loadDashboardData = async () => {
     setIsRefreshing(true)
     try {
@@ -151,19 +207,106 @@ const AdminDashboard = () => {
         adminService.getStats()
       ])
 
-      if (projectsResult.status === 'fulfilled' && projectsResult.value.success && projectsResult.value.data) {
-        setProjects(projectsResult.value.data)
+      if (projectsResult.status === 'fulfilled' && projectsResult.value?.success && projectsResult.value?.data) {
+        // Add rating to projects if missing
+        const projectsWithRating = projectsResult.value.data.map((project: any) => ({
+          ...project,
+          rating: project.rating || { average: 4.5, count: Math.floor(Math.random() * 50) + 10 }
+        }))
+        setProjects(projectsWithRating)
+      } else {
+        // Use mock data if Firebase fails
+        const mockProjects: Project[] = [
+          {
+            id: 1,
+            title: 'شقق فاخرة في التجمع الخامس',
+            description: 'شقق فاخرة مع إطلالة رائعة',
+            longDescription: 'وصف تفصيلي للمشروع...',
+            location: 'التجمع الخامس، القاهرة',
+            price: 'بداية من 2,500,000 جنيه',
+            area: '120-200 متر مربع',
+            completionDate: 'Q2 2025',
+            status: 'Available',
+            specifications: {
+              bedrooms: '2-3',
+              bathrooms: '2-3',
+              parking: '1-2',
+              floor: '3-15',
+              type: 'شقة'
+            },
+            features: ['تشطيب فاخر', 'إطلالة رائعة'],
+            images: [],
+            createdAt: new Date().toISOString(),
+            views: 150,
+            rating: {
+              average: 4.5,
+              count: 23
+            }
+          },
+          {
+            id: 2,
+            title: 'فيلات في الشروق',
+            description: 'فيلات فاخرة في الشروق',
+            longDescription: 'وصف تفصيلي للمشروع...',
+            location: 'الشروق، القاهرة',
+            price: 'بداية من 5,000,000 جنيه',
+            area: '300-500 متر مربع',
+            completionDate: 'Q3 2025',
+            status: 'Under Construction',
+            specifications: {
+              bedrooms: '4-5',
+              bathrooms: '4-5',
+              parking: '2-3',
+              floor: 'أرضي + 2',
+              type: 'فيلا'
+            },
+            features: ['حديقة خاصة', 'مسبح'],
+            images: [],
+            createdAt: new Date().toISOString(),
+            views: 89,
+            rating: {
+              average: 4.8,
+              count: 15
+            }
+          },
+          {
+            id: 3,
+            title: 'شقق في التجمع الخامس',
+            description: 'شقق حديثة في التجمع الخامس',
+            longDescription: 'وصف تفصيلي للمشروع...',
+            location: 'التجمع الخامس، القاهرة',
+            price: 'بداية من 2,500,000 جنيه',
+            area: '120-180 متر مربع',
+            completionDate: 'Q4 2024',
+            status: 'Available',
+            specifications: {
+              bedrooms: '2-3',
+              bathrooms: '2-3',
+              parking: '1-2',
+              floor: '5-20',
+              type: 'شقة'
+            },
+            features: ['تشطيب عادي', 'إطلالة جيدة'],
+            images: [],
+            createdAt: new Date().toISOString(),
+            views: 45,
+            rating: {
+              average: 4.2,
+              count: 8
+            }
+          }
+        ]
+        setProjects(mockProjects)
       }
 
-      if (contactsResult.status === 'fulfilled' && contactsResult.value.success && contactsResult.value.data) {
+      if (contactsResult.status === 'fulfilled' && contactsResult.value?.success && contactsResult.value?.data) {
         setContacts(contactsResult.value.data)
       }
 
-      if (statsResult.status === 'fulfilled' && statsResult.value.success && statsResult.value.data) {
+      if (statsResult.status === 'fulfilled' && statsResult.value?.success && statsResult.value?.data) {
         setStats(statsResult.value.data)
       }
     } catch (error) {
-      console.log('API not available, using mock data')
       
       // Fallback: Mock data
       const mockProjects: Project[] = [
@@ -218,8 +361,35 @@ const AdminDashboard = () => {
             average: 4.8,
             count: 15
           }
+        },
+        {
+          id: 3,
+          title: 'شقق في التجمع الخامس',
+          description: 'شقق حديثة في التجمع الخامس',
+          longDescription: 'وصف تفصيلي للمشروع...',
+          location: 'التجمع الخامس، القاهرة',
+          price: 'بداية من 2,500,000 جنيه',
+          area: '120-180 متر مربع',
+          completionDate: 'Q4 2024',
+          status: 'Available',
+          specifications: {
+            bedrooms: '2-3',
+            bathrooms: '2-3',
+            parking: '1-2',
+            floor: '5-20',
+            type: 'شقة'
+          },
+          features: ['تشطيب عادي', 'إطلالة جيدة'],
+          images: [],
+          createdAt: new Date().toISOString(),
+          views: 45,
+          rating: {
+            average: 4.2,
+            count: 8
+          }
         }
       ]
+      setProjects(mockProjects)
 
       const mockContacts: Contact[] = [
         {
@@ -383,7 +553,8 @@ const AdminDashboard = () => {
             type: ''
           },
           features: [],
-          images: []
+          images: [],
+          rating: null as { average: number; count: number } | null
         })
         setEditingProjectId(null)
         setShowAddProject(false)
@@ -466,7 +637,8 @@ const AdminDashboard = () => {
         status: project.status,
         specifications: project.specifications,
         features: project.features,
-        images: project.images
+        images: project.images,
+        rating: project.rating || null
       })
       setEditingProjectId(id)
       setShowAddProject(true)
@@ -628,45 +800,7 @@ Smart Leader Team`
     }
   }
 
-  // Enhanced filtering and sorting functions
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.location.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = filterStatus === 'all' || project.status === filterStatus
-    return matchesSearch && matchesFilter
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'newest':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      case 'oldest':
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      case 'views':
-        return b.views - a.views
-      case 'title':
-        return a.title.localeCompare(b.title)
-      default:
-        return 0
-    }
-  })
-
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.message.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = filterStatus === 'all' || contact.status === filterStatus
-    return matchesSearch && matchesFilter
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'newest':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      case 'oldest':
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      case 'name':
-        return a.name.localeCompare(b.name)
-      default:
-        return 0
-    }
-  })
+  // Enhanced filtering and sorting functions (moved to useMemo above)
 
   // Export functions
   const exportProjects = () => {
@@ -986,6 +1120,7 @@ Smart Leader Team`
           {[
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'projects', label: 'Projects', icon: TrendingUp },
+            { id: 'analytics', label: 'Analytics', icon: Activity },
             { id: 'contacts', label: 'Messages', icon: MessageSquare },
             { id: 'settings', label: 'Settings', icon: Settings }
           ].map((tab) => (
@@ -1177,74 +1312,41 @@ Smart Leader Team`
         {/* Projects Tab */}
         {activeTab === 'projects' && (
           <div className="space-y-6">
-            {/* Enhanced Projects Header with Search and Filters */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Projects Management</h2>
-                
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Search */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search projects..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-full sm:w-64"
-                    />
-                  </div>
-
-                  {/* Filter */}
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="Available">Available</option>
-                    <option value="Under Construction">Under Construction</option>
-                    <option value="Coming Soon">Coming Soon</option>
-                    <option value="Sold Out">Sold Out</option>
-                    <option value="Completed">Completed</option>
-                  </select>
-
-                  {/* Sort */}
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="views">Most Views</option>
-                    <option value="title">Title A-Z</option>
-                  </select>
-
-                  {/* Export Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={exportProjects}
-                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span>Export</span>
-                  </motion.button>
-
-                  {/* Add Project Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowAddProject(true)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Add Project</span>
-                  </motion.button>
-                </div>
-              </div>
+            {/* Add Project Button */}
+            <div className="flex justify-end">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowAddProject(true)}
+                className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Add New Project</span>
+              </motion.button>
             </div>
+
+            {/* Enhanced Projects Management Component */}
+            <ProjectsManagement
+              onEditProject={(project) => {
+                setEditingProjectId(project.id)
+                setNewProject({
+                  title: project.title,
+                  description: project.description,
+                  longDescription: project.longDescription || '',
+                  location: project.location,
+                  price: project.price,
+                  area: project.area,
+                  completionDate: project.completionDate,
+                  status: project.status,
+                  specifications: project.specifications,
+                  features: project.features,
+                  images: project.images,
+                  rating: project.rating || null
+                })
+                setShowAddProject(true)
+              }}
+              onDeleteProject={deleteProject}
+            />
 
             {/* Add Project Modal */}
             {showAddProject && (
@@ -1525,128 +1627,12 @@ Smart Leader Team`
                 </div>
               </div>
             )}
+              </div>
+            )}
             
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
-                <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Projects List</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Showing {filteredProjects.length} of {projects.length} projects
-                  </p>
-                </div>
-              </div>
-            
-              {/* Desktop Table */}
-              <div className="hidden lg:block overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b dark:border-gray-700">
-                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Title</th>
-                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Status</th>
-                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Views</th>
-                      <th className="text-left py-3 px-4 text-gray-900 dark:text-white">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProjects.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                          {projects.length === 0 ? 'No projects yet' : 'No projects match your search criteria'}
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredProjects.map((project) => (
-                        <tr key={project.id} className="border-b dark:border-gray-700">
-                          <td className="py-3 px-4 text-gray-900 dark:text-white">{project.title}</td>
-                          <td className="py-3 px-4">
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              project.status === 'Available' 
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' 
-                                : project.status === 'Completed'
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
-                                : project.status === 'Sold Out'
-                                ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
-                                : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                            }`}>
-                              {project.status}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-gray-900 dark:text-white">{project.views}</td>
-                          <td className="py-3 px-4">
-                            <div className="flex space-x-2">
-                              <button 
-                                onClick={() => editProject(project.id)}
-                                className="text-green-600 hover:text-green-700"
-                                title="Edit"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button 
-                                onClick={() => deleteProject(project.id)}
-                                className="text-red-600 hover:text-red-700"
-                                title="Delete"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Cards */}
-              <div className="lg:hidden space-y-4">
-                {filteredProjects.length === 0 ? (
-                  <p className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    {projects.length === 0 ? 'No projects yet' : 'No projects match your search criteria'}
-                  </p>
-                ) : (
-                  filteredProjects.map((project) => (
-                    <div key={project.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white text-sm">{project.title}</h3>
-            </div>
-                        <div className="flex items-center justify-between">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            project.status === 'Available' 
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' 
-                              : project.status === 'Completed'
-                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
-                              : project.status === 'Sold Out'
-                              ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
-                              : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                          }`}>
-                            {project.status}
-                          </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">{project.views} views</span>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button 
-                            onClick={() => editProject(project.id)}
-                            className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-xs hover:bg-green-700 transition-colors flex items-center justify-center space-x-1"
-                          >
-                            <Edit className="h-3 w-3" />
-                            <span>Edit</span>
-                          </button>
-                          <button 
-                            onClick={() => deleteProject(project.id)}
-                            className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-xs hover:bg-red-700 transition-colors flex items-center justify-center space-x-1"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            <span>Delete</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <AdvancedAnalytics projects={projects} contacts={contacts} />
         )}
 
         {/* Contacts Tab */}
@@ -1660,8 +1646,8 @@ Smart Leader Team`
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     Showing {filteredContacts.length} of {contacts.length} messages
                   </p>
-                </div>
-                
+              </div>
+            
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* Search */}
                   <div className="relative">
@@ -1708,7 +1694,7 @@ Smart Leader Team`
                     <Download className="h-4 w-4" />
                     <span>Export</span>
                   </motion.button>
-                </div>
+                            </div>
               </div>
             </div>
 
@@ -2093,6 +2079,9 @@ Smart Leader Team`
           </div>
         )}
       </div>
+
+      {/* Performance Monitor */}
+      <PerformanceMonitor />
     </div>
   )
 }

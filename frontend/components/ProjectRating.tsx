@@ -135,18 +135,18 @@ const ProjectRating = ({
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center space-x-2 mb-1">
-                {renderStars(currentRating.average)}
+                {renderStars(currentRating?.average || 0)}
                 <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {currentRating.average.toFixed(1)}
+                  {currentRating?.average?.toFixed(1) || '0.0'}
                 </span>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Based on {currentRating.count} review{currentRating.count !== 1 ? 's' : ''}
+                Based on {currentRating?.count || 0} review{(currentRating?.count || 0) !== 1 ? 's' : ''}
               </p>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {currentRating.count}
+                {currentRating?.count || 0}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Total Reviews
