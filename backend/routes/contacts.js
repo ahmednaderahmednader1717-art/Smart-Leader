@@ -1,23 +1,9 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const Contact = require('../models/Contact');
+const { db } = require('../config/firebase');
 const { auth, adminAuth } = require('../middleware/auth');
-const nodemailer = require('nodemailer');
 
 const router = express.Router();
-
-// Email transporter configuration
-const createTransporter = () => {
-  return nodemailer.createTransporter({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-};
 
 // @route   POST /api/contacts
 // @desc    Create new contact submission
@@ -36,46 +22,24 @@ router.post('/', [
     const { name, email, phone, message } = req.body;
 
     // Create contact submission
-    const contact = new Contact({
+    const contactData = {
       name,
       email,
-      phone,
+      phone: phone || '',
       message,
+      status: 'New',
+      isRead: false,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
-    });
+      userAgent: req.get('User-Agent'),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
 
-    await contact.save();
-
-    // Send email notification to admin
-    try {
-      const transporter = createTransporter();
-      
-      const mailOptions = {
-        from: process.env.EMAIL_FROM || 'noreply@smartleader.com',
-        to: process.env.EMAIL_TO || 'admin@smartleader.com',
-        subject: `New Contact Form Submission from ${name}`,
-        html: `
-          <h2>New Contact Form Submission</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone || 'Not provided'}</p>
-          <p><strong>Message:</strong></p>
-          <p>${message}</p>
-          <hr>
-          <p><small>Submitted at: ${new Date().toLocaleString()}</small></p>
-        `
-      };
-
-      await transporter.sendMail(mailOptions);
-    } catch (emailError) {
-      console.error('Email sending error:', emailError);
-      // Don't fail the request if email fails
-    }
+    const docRef = await db.collection('contacts').add(contactData);
 
     res.status(201).json({ 
       message: 'Contact form submitted successfully',
-      id: contact._id
+      id: docRef.id
     });
   } catch (error) {
     console.error('Contact submission error:', error);
@@ -90,34 +54,49 @@ router.get('/', adminAuth, async (req, res) => {
   try {
     const { status, page = 1, limit = 10, search } = req.query;
     
-    let query = {};
+    let query = db.collection('contacts');
     
     // Filter by status
     if (status) {
-      query.status = status;
+      query = query.where('status', '==', status);
     }
     
-    // Search functionality
+    const snapshot = await query
+      .orderBy('createdAt', 'desc')
+      .limit(parseInt(limit))
+      .offset((parseInt(page) - 1) * parseInt(limit))
+      .get();
+    
+    const contacts = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      contacts.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+      });
+    });
+    
+    // Apply search filter client-side (for better performance, consider using Algolia)
+    let filteredContacts = contacts;
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { message: { $regex: search, $options: 'i' } }
-      ];
+      const searchLower = search.toLowerCase();
+      filteredContacts = contacts.filter(contact => 
+        contact.name.toLowerCase().includes(searchLower) ||
+        contact.email.toLowerCase().includes(searchLower) ||
+        contact.message.toLowerCase().includes(searchLower)
+      );
     }
     
-    const contacts = await Contact.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .select('-__v');
-    
-    const total = await Contact.countDocuments(query);
+    // Get total count
+    const totalSnapshot = await db.collection('contacts').get();
+    const total = totalSnapshot.size;
     
     res.json({
-      contacts,
+      contacts: filteredContacts,
       totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      currentPage: parseInt(page),
       total
     });
   } catch (error) {
@@ -131,19 +110,29 @@ router.get('/', adminAuth, async (req, res) => {
 // @access  Private (Admin only)
 router.get('/:id', adminAuth, async (req, res) => {
   try {
-    const contact = await Contact.findById(req.params.id);
+    const contactDoc = await db.collection('contacts').doc(req.params.id).get();
     
-    if (!contact) {
+    if (!contactDoc.exists) {
       return res.status(404).json({ message: 'Contact not found' });
     }
     
+    const contact = contactDoc.data();
+    
     // Mark as read
     if (!contact.isRead) {
+      await db.collection('contacts').doc(req.params.id).update({
+        isRead: true,
+        updatedAt: new Date()
+      });
       contact.isRead = true;
-      await contact.save();
     }
     
-    res.json(contact);
+    res.json({
+      id: contactDoc.id,
+      ...contact,
+      createdAt: contact.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: contact.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+    });
   } catch (error) {
     console.error('Get contact error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -155,7 +144,7 @@ router.get('/:id', adminAuth, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/:id/status', [
   adminAuth,
-  body('status').isIn(['new', 'contacted', 'in-progress', 'resolved'])
+  body('status').isIn(['New', 'Contacted', 'In Progress', 'Resolved'])
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -163,17 +152,27 @@ router.put('/:id/status', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const contact = await Contact.findByIdAndUpdate(
-      req.params.id,
-      { status: req.body.status },
-      { new: true }
-    );
+    const contactRef = db.collection('contacts').doc(req.params.id);
+    const contactDoc = await contactRef.get();
     
-    if (!contact) {
+    if (!contactDoc.exists) {
       return res.status(404).json({ message: 'Contact not found' });
     }
+
+    await contactRef.update({
+      status: req.body.status,
+      updatedAt: new Date()
+    });
     
-    res.json(contact);
+    const updatedDoc = await contactRef.get();
+    const updatedContact = updatedDoc.data();
+    
+    res.json({
+      id: updatedDoc.id,
+      ...updatedContact,
+      createdAt: updatedContact.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: updatedContact.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+    });
   } catch (error) {
     console.error('Update contact status error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -193,20 +192,36 @@ router.post('/:id/notes', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const contact = await Contact.findById(req.params.id);
+    const contactRef = db.collection('contacts').doc(req.params.id);
+    const contactDoc = await contactRef.get();
     
-    if (!contact) {
+    if (!contactDoc.exists) {
       return res.status(404).json({ message: 'Contact not found' });
     }
     
-    contact.notes.push({
+    const currentData = contactDoc.data();
+    const notes = currentData.notes || [];
+    
+    notes.push({
       note: req.body.note,
-      addedBy: req.user.email
+      addedBy: req.user.email,
+      addedAt: new Date()
     });
     
-    await contact.save();
+    await contactRef.update({
+      notes: notes,
+      updatedAt: new Date()
+    });
     
-    res.json(contact);
+    const updatedDoc = await contactRef.get();
+    const updatedContact = updatedDoc.data();
+    
+    res.json({
+      id: updatedDoc.id,
+      ...updatedContact,
+      createdAt: updatedContact.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: updatedContact.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+    });
   } catch (error) {
     console.error('Add note error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -218,11 +233,14 @@ router.post('/:id/notes', [
 // @access  Private (Admin only)
 router.delete('/:id', adminAuth, async (req, res) => {
   try {
-    const contact = await Contact.findByIdAndDelete(req.params.id);
+    const contactRef = db.collection('contacts').doc(req.params.id);
+    const contactDoc = await contactRef.get();
     
-    if (!contact) {
+    if (!contactDoc.exists) {
       return res.status(404).json({ message: 'Contact not found' });
     }
+
+    await contactRef.delete();
     
     res.json({ message: 'Contact deleted successfully' });
   } catch (error) {
@@ -236,18 +254,26 @@ router.delete('/:id', adminAuth, async (req, res) => {
 // @access  Private (Admin only)
 router.get('/stats/summary', adminAuth, async (req, res) => {
   try {
-    const total = await Contact.countDocuments();
-    const newContacts = await Contact.countDocuments({ status: 'new' });
-    const contacted = await Contact.countDocuments({ status: 'contacted' });
-    const inProgress = await Contact.countDocuments({ status: 'in-progress' });
-    const resolved = await Contact.countDocuments({ status: 'resolved' });
+    const contactsSnapshot = await db.collection('contacts').get();
+    const contacts = [];
+    
+    contactsSnapshot.forEach(doc => {
+      contacts.push(doc.data());
+    });
+    
+    const total = contacts.length;
+    const newContacts = contacts.filter(c => c.status === 'New').length;
+    const contacted = contacts.filter(c => c.status === 'Contacted').length;
+    const inProgress = contacts.filter(c => c.status === 'In Progress').length;
+    const resolved = contacts.filter(c => c.status === 'Resolved').length;
     
     // Get recent contacts (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const recentContacts = await Contact.countDocuments({
-      createdAt: { $gte: sevenDaysAgo }
-    });
+    const recentContacts = contacts.filter(c => {
+      const createdAt = c.createdAt?.toDate?.() || new Date();
+      return createdAt >= sevenDaysAgo;
+    }).length;
     
     res.json({
       total,

@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -31,44 +30,33 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Firebase Admin initialization
+const admin = require('firebase-admin');
 
-// Firebase initialization
-const { initializeApp } = require('firebase/app');
-const { getFirestore } = require('firebase/firestore');
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCjSrQw2dkKjMfR-KxT2fzMQthoW45dhuk",
-  authDomain: "smart-leader-ff5ff.firebaseapp.com",
-  projectId: "smart-leader-ff5ff",
-  storageBucket: "smart-leader-ff5ff.firebasestorage.app",
-  messagingSenderId: "367490239791",
-  appId: "1:367490239791:web:38b0fb69083e0add8265da"
+// Initialize Firebase Admin SDK
+const serviceAccount = {
+  type: "service_account",
+  project_id: "smart-leader-ff5ff",
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  client_id: process.env.FIREBASE_CLIENT_ID,
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${process.env.FIREBASE_CLIENT_EMAIL}`
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Initialize Firebase Admin
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    projectId: "smart-leader-ff5ff"
+  });
+}
 
-console.log('Firebase initialized successfully');
-
-
-
-// Firebase initialization
-const { initializeApp } = require('firebase/app');
-const { getFirestore } = require('firebase/firestore');
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCjSrQw2dkKjMfR-KxT2fzMQthoW45dhuk",
-  authDomain: "smart-leader-ff5ff.firebaseapp.com",
-  projectId: "smart-leader-ff5ff",
-  storageBucket: "smart-leader-ff5ff.firebasestorage.app",
-  messagingSenderId: "367490239791",
-  appId: "1:367490239791:web:38b0fb69083e0add8265da"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-console.log('Firebase initialized successfully');
+const db = admin.firestore();
+console.log('Firebase Admin initialized successfully');
 
 
 

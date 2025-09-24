@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const admin = require('firebase-admin');
+const { db } = require('../config/firebase');
 
 const auth = async (req, res, next) => {
   try {
@@ -9,14 +9,28 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-password');
+    // Verify Firebase ID token
+    const decodedToken = await admin.auth().verifyIdToken(token);
     
-    if (!user || !user.isActive) {
-      return res.status(401).json({ message: 'Token is not valid' });
+    // Get user data from Firestore
+    const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+    
+    if (!userDoc.exists) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+    
+    const userData = userDoc.data();
+    
+    if (!userData.isActive) {
+      return res.status(401).json({ message: 'User account is deactivated' });
     }
 
-    req.user = user;
+    req.user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      ...userData
+    };
+    
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
@@ -39,4 +53,3 @@ const adminAuth = async (req, res, next) => {
 };
 
 module.exports = { auth, adminAuth };
-

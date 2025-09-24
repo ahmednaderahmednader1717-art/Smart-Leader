@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const Project = require('../models/Project');
+const { db } = require('../config/firebase');
 const { auth, adminAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -12,35 +12,49 @@ router.get('/', async (req, res) => {
   try {
     const { status, featured, search, page = 1, limit = 10 } = req.query;
     
-    let query = { isActive: true };
+    let query = db.collection('projects');
     
     // Filter by status
     if (status) {
-      query.status = status;
+      query = query.where('status', '==', status);
     }
     
     // Filter featured projects
     if (featured === 'true') {
-      query.isFeatured = true;
+      query = query.where('isFeatured', '==', true);
     }
     
     // Search functionality
     if (search) {
-      query.$text = { $search: search };
+      // Firestore doesn't support full-text search, so we'll filter client-side
+      // For better performance, consider using Algolia or Elasticsearch
     }
     
-    const projects = await Project.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .select('-__v');
+    const snapshot = await query
+      .orderBy('createdAt', 'desc')
+      .limit(parseInt(limit))
+      .offset((parseInt(page) - 1) * parseInt(limit))
+      .get();
     
-    const total = await Project.countDocuments(query);
+    const projects = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      projects.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+      });
+    });
+    
+    // Get total count
+    const totalSnapshot = await db.collection('projects').get();
+    const total = totalSnapshot.size;
     
     res.json({
       projects,
       totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      currentPage: parseInt(page),
       total
     });
   } catch (error) {
@@ -54,17 +68,27 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
-    const project = await Project.findById(req.params.id);
+    const projectDoc = await db.collection('projects').doc(req.params.id).get();
     
-    if (!project || !project.isActive) {
+    if (!projectDoc.exists) {
       return res.status(404).json({ message: 'Project not found' });
     }
     
-    // Increment view count
-    project.views += 1;
-    await project.save();
+    const project = projectDoc.data();
     
-    res.json(project);
+    // Increment view count
+    await db.collection('projects').doc(req.params.id).update({
+      views: (project.views || 0) + 1,
+      lastViewedAt: new Date()
+    });
+    
+    res.json({
+      id: projectDoc.id,
+      ...project,
+      views: (project.views || 0) + 1,
+      createdAt: project.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: project.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+    });
   } catch (error) {
     console.error('Get project error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -95,10 +119,23 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const project = new Project(req.body);
-    await project.save();
+    const projectData = {
+      ...req.body,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      views: 0,
+      isActive: true,
+      isFeatured: false
+    };
+
+    const docRef = await db.collection('projects').add(projectData);
     
-    res.status(201).json(project);
+    res.status(201).json({
+      id: docRef.id,
+      ...projectData,
+      createdAt: projectData.createdAt.toISOString(),
+      updatedAt: projectData.updatedAt.toISOString()
+    });
   } catch (error) {
     console.error('Create project error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -124,17 +161,29 @@ router.put('/:id', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const project = await Project.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const projectRef = db.collection('projects').doc(req.params.id);
+    const projectDoc = await projectRef.get();
     
-    if (!project) {
+    if (!projectDoc.exists) {
       return res.status(404).json({ message: 'Project not found' });
     }
+
+    const updateData = {
+      ...req.body,
+      updatedAt: new Date()
+    };
+
+    await projectRef.update(updateData);
     
-    res.json(project);
+    const updatedDoc = await projectRef.get();
+    const updatedProject = updatedDoc.data();
+    
+    res.json({
+      id: updatedDoc.id,
+      ...updatedProject,
+      createdAt: updatedProject.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: updatedProject.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+    });
   } catch (error) {
     console.error('Update project error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -146,15 +195,17 @@ router.put('/:id', [
 // @access  Private (Admin only)
 router.delete('/:id', adminAuth, async (req, res) => {
   try {
-    const project = await Project.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
+    const projectRef = db.collection('projects').doc(req.params.id);
+    const projectDoc = await projectRef.get();
     
-    if (!project) {
+    if (!projectDoc.exists) {
       return res.status(404).json({ message: 'Project not found' });
     }
+
+    await projectRef.update({
+      isActive: false,
+      updatedAt: new Date()
+    });
     
     res.json({ message: 'Project deleted successfully' });
   } catch (error) {
@@ -168,16 +219,30 @@ router.delete('/:id', adminAuth, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/:id/feature', adminAuth, async (req, res) => {
   try {
-    const project = await Project.findById(req.params.id);
+    const projectRef = db.collection('projects').doc(req.params.id);
+    const projectDoc = await projectRef.get();
     
-    if (!project) {
+    if (!projectDoc.exists) {
       return res.status(404).json({ message: 'Project not found' });
     }
     
-    project.isFeatured = !project.isFeatured;
-    await project.save();
+    const currentData = projectDoc.data();
+    const newFeaturedStatus = !currentData.isFeatured;
     
-    res.json(project);
+    await projectRef.update({
+      isFeatured: newFeaturedStatus,
+      updatedAt: new Date()
+    });
+    
+    const updatedDoc = await projectRef.get();
+    const updatedProject = updatedDoc.data();
+    
+    res.json({
+      id: updatedDoc.id,
+      ...updatedProject,
+      createdAt: updatedProject.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: updatedProject.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+    });
   } catch (error) {
     console.error('Toggle feature error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -185,4 +250,3 @@ router.put('/:id/feature', adminAuth, async (req, res) => {
 });
 
 module.exports = router;
-
