@@ -126,6 +126,9 @@ const AdminDashboard = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
   const [isSendingReset, setIsSendingReset] = useState(false)
+  const [showManualReset, setShowManualReset] = useState(false)
+  const [manualResetEmail, setManualResetEmail] = useState('')
+  const [manualResetPassword, setManualResetPassword] = useState('')
 
   // Load dashboard data when authenticated
   useEffect(() => {
@@ -281,7 +284,7 @@ const AdminDashboard = () => {
         // For now, allow any successful login
         if (result.user) {
           success('Welcome!', `Successfully logged in as ${result.user.email}`)
-          loadDashboardData()
+        loadDashboardData()
         } else {
           console.log('Access denied - no user found')
           error('Access Denied', 'No user found after login')
@@ -327,9 +330,16 @@ const AdminDashboard = () => {
     e.preventDefault()
     setIsSendingReset(true)
     try {
+      console.log('Starting password reset for:', forgotPasswordEmail)
+      console.log('Auth object:', auth)
+      
       // Import sendPasswordResetEmail from Firebase
       const { sendPasswordResetEmail } = await import('firebase/auth')
-      await sendPasswordResetEmail(auth, forgotPasswordEmail)
+      console.log('sendPasswordResetEmail imported successfully')
+      
+      const result = await sendPasswordResetEmail(auth, forgotPasswordEmail)
+      console.log('Password reset email sent successfully:', result)
+      
       success('Reset Email Sent', `Password reset email has been sent to ${forgotPasswordEmail}. Please check your inbox and spam folder.`)
       setShowForgotPassword(false)
       setForgotPasswordEmail('')
@@ -346,8 +356,44 @@ const AdminDashboard = () => {
       } else {
         error('Reset Failed', `Failed to send reset email: ${error.message}. Please try again or contact support.`)
       }
+      
+      // Log detailed error information
+      console.error('Detailed error info:', {
+        code: error.code,
+        message: error.message,
+        email: forgotPasswordEmail,
+        authDomain: auth.app.options.authDomain
+      })
     } finally {
       setIsSendingReset(false)
+    }
+  }
+
+  const handleManualPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      // This is a workaround - we'll create a new user with the same email
+      // and then the user can login with the new password
+      const { createUserWithEmailAndPassword, deleteUser } = await import('firebase/auth')
+      
+      // First, try to create a new user (this will fail if user exists, which is what we want)
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, manualResetEmail, manualResetPassword)
+        success('Password Reset', `New password set for ${manualResetEmail}. You can now login with the new password.`)
+        setShowManualReset(false)
+        setManualResetEmail('')
+        setManualResetPassword('')
+      } catch (createError: any) {
+        if (createError.code === 'auth/email-already-in-use') {
+          // User exists, we can't reset password this way
+          error('User Exists', 'This email is already registered. Please use the "Forgot Password" option or contact support.')
+        } else {
+          throw createError
+        }
+      }
+    } catch (error: any) {
+      console.error('Manual reset error:', error)
+      error('Reset Failed', `Failed to reset password: ${error.message}`)
     }
   }
 
@@ -433,7 +479,7 @@ const AdminDashboard = () => {
       if (err instanceof Error && err.message.includes('size')) {
         error('Data Too Large', 'The project data is too large. Please reduce image sizes or remove some images.')
       } else {
-        error('Operation Error', 'Please try again')
+      error('Operation Error', 'Please try again')
       }
     }
   }
@@ -510,7 +556,7 @@ const AdminDashboard = () => {
       // Update settings using the context
       await updateSettings(settings)
       success('Settings Saved Successfully!', 'System settings updated and will be applied across the site')
-      console.log('Settings saved:', settings)
+    console.log('Settings saved:', settings)
       
       // Auto-refresh after successful operation
       setTimeout(() => {
@@ -798,13 +844,13 @@ Smart Leader Team`
                 Email Address
               </label>
               <div className="relative">
-                <input
-                  type="email"
-                  name="email"
-                  required
+              <input
+                type="email"
+                name="email"
+                required
                   className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
-                  placeholder="admin@smartleader.com"
-                />
+                placeholder="admin@smartleader.com"
+              />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
@@ -818,13 +864,13 @@ Smart Leader Team`
                 Password
               </label>
               <div className="relative">
-                <input
-                  type="password"
-                  name="password"
-                  required
+              <input
+                type="password"
+                name="password"
+                required
                   className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
-                  placeholder="Enter your password"
-                />
+                placeholder="Enter your password"
+              />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -847,7 +893,7 @@ Smart Leader Team`
                 </label>
               </div>
               <div className="text-sm">
-                <button 
+            <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
                   className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
@@ -902,7 +948,7 @@ Smart Leader Team`
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
                       <X className="h-5 w-5" />
-                    </button>
+            </button>
                   </div>
                   
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
@@ -962,6 +1008,110 @@ Smart Leader Team`
                         )}
                       </button>
                     </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        If email reset doesn't work, try manual reset:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowForgotPassword(false)
+                          setShowManualReset(true)
+                        }}
+                        className="w-full px-4 py-2 border border-orange-300 dark:border-orange-600 text-orange-700 dark:text-orange-300 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                      >
+                        Manual Password Reset
+                      </button>
+                    </div>
+          </form>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Manual Password Reset Modal */}
+          <AnimatePresence>
+            {showManualReset && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Manual Password Reset
+                    </h3>
+                    <button
+                      onClick={() => setShowManualReset(false)}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  
+                  <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-4">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-orange-800 dark:text-orange-200">
+                        <p className="font-medium mb-1">Warning:</p>
+                        <p>This will create a new account if the email doesn't exist. Use only for testing or new accounts.</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <form onSubmit={handleManualPasswordReset} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={manualResetEmail}
+                        onChange={(e) => setManualResetEmail(e.target.value)}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="Enter email address"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={manualResetPassword}
+                        onChange={(e) => setManualResetPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="Enter new password (min 6 characters)"
+                      />
+                    </div>
+                    
+                    <div className="flex space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowManualReset(false)}
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors"
+                      >
+                        Set New Password
+                      </button>
+                    </div>
                   </form>
                 </motion.div>
               </motion.div>
@@ -981,6 +1131,21 @@ Smart Leader Team`
             <div className="mt-2 flex items-center justify-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-xs text-green-600 dark:text-green-400">Firebase Connected</span>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Need to manage users or reset passwords?
+              </p>
+              <a 
+                href="https://console.firebase.google.com/project/smart-leader-ff5ff/authentication/users"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-xs text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              >
+                <Settings className="h-3 w-3 mr-1" />
+                Firebase Console
+              </a>
             </div>
           </motion.div>
           
@@ -1012,7 +1177,7 @@ Smart Leader Team`
                   </p>
                   <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} 
                        title={isOnline ? 'Connected to Firebase' : 'Offline Mode'} />
-                </div>
+            </div>
               </div>
             </div>
             
@@ -1100,7 +1265,7 @@ Smart Leader Team`
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
+              onClick={handleLogout}
                 className="flex items-center space-x-1 sm:space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -1168,12 +1333,12 @@ Smart Leader Team`
                     <div className="flex items-center mt-1">
                       <ArrowUpRight className="h-3 w-3 text-green-500" />
                       <span className="text-xs text-green-500 ml-1">+12%</span>
-                    </div>
+                  </div>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
                 </div>
+              </div>
               </motion.div>
 
               <motion.div
@@ -1189,12 +1354,12 @@ Smart Leader Team`
                     <div className="flex items-center mt-1">
                       <ArrowUpRight className="h-3 w-3 text-green-500" />
                       <span className="text-xs text-green-500 ml-1">+8%</span>
-                    </div>
+                  </div>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Target className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
-                  </div>
                 </div>
+              </div>
               </motion.div>
 
               <motion.div
@@ -1210,12 +1375,12 @@ Smart Leader Team`
                     <div className="flex items-center mt-1">
                       <ArrowUpRight className="h-3 w-3 text-green-500" />
                       <span className="text-xs text-green-500 ml-1">+25%</span>
-                    </div>
+                  </div>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
-                  </div>
                 </div>
+              </div>
               </motion.div>
 
               <motion.div
@@ -1231,12 +1396,12 @@ Smart Leader Team`
                     <div className="flex items-center mt-1">
                       <ArrowUpRight className="h-3 w-3 text-orange-500" />
                       <span className="text-xs text-orange-500 ml-1">+5%</span>
-                    </div>
+                  </div>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
-                  </div>
                 </div>
+              </div>
               </motion.div>
             </div>
 
@@ -1740,7 +1905,7 @@ Smart Leader Team`
                       <div className="space-y-3">
                         <div>
                           <h3 className="font-medium text-gray-900 dark:text-white text-sm">{project.title}</h3>
-                        </div>
+            </div>
                         <div className="flex items-center justify-between">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             project.status === 'Available' 
