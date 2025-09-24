@@ -228,6 +228,31 @@ export const projectsService = {
     } catch (error) {
       return { success: false, error: error.message };
     }
+  },
+
+  // Increment project views
+  async incrementViews(id) {
+    try {
+      // Find document by custom ID
+      const projectsRef = collection(db, 'projects');
+      const snapshot = await getDocs(projectsRef);
+      const projectDoc = snapshot.docs.find(doc => doc.data().id === id);
+      
+      if (!projectDoc) {
+        return { success: false, error: 'Project not found' };
+      }
+      
+      const currentViews = projectDoc.data().views || 0;
+      await updateDoc(projectDoc.ref, {
+        views: currentViews + 1,
+        lastViewedAt: new Date()
+      });
+      
+      return { success: true, views: currentViews + 1 };
+    } catch (error) {
+      console.error('Error incrementing views:', error);
+      return { success: false, error: error.message };
+    }
   }
 };
 

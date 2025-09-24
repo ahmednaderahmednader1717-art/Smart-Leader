@@ -52,6 +52,8 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
           const foundProject = result.data.find(p => p.id.toString() === projectId)
           if (foundProject) {
             setProject(foundProject)
+            // Increment views when project is loaded
+            await projectsService.incrementViews(foundProject.id)
           } else {
             // Fallback to mock data if project not found
             setProject({

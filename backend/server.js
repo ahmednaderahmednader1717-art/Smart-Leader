@@ -31,13 +31,47 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smart-leader-real-estate', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.error('MongoDB connection error:', err));
+
+// Firebase initialization
+const { initializeApp } = require('firebase/app');
+const { getFirestore } = require('firebase/firestore');
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCjSrQw2dkKjMfR-KxT2fzMQthoW45dhuk",
+  authDomain: "smart-leader-ff5ff.firebaseapp.com",
+  projectId: "smart-leader-ff5ff",
+  storageBucket: "smart-leader-ff5ff.firebasestorage.app",
+  messagingSenderId: "367490239791",
+  appId: "1:367490239791:web:38b0fb69083e0add8265da"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+console.log('Firebase initialized successfully');
+
+
+
+// Firebase initialization
+const { initializeApp } = require('firebase/app');
+const { getFirestore } = require('firebase/firestore');
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCjSrQw2dkKjMfR-KxT2fzMQthoW45dhuk",
+  authDomain: "smart-leader-ff5ff.firebaseapp.com",
+  projectId: "smart-leader-ff5ff",
+  storageBucket: "smart-leader-ff5ff.firebasestorage.app",
+  messagingSenderId: "367490239791",
+  appId: "1:367490239791:web:38b0fb69083e0add8265da"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+console.log('Firebase initialized successfully');
+
+
+
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));

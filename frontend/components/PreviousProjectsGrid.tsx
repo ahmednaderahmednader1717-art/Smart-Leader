@@ -373,6 +373,10 @@ const PreviousProjectsGrid = () => {
                 <Link
                   href={`/projects/${project.id}`}
                   className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
+                  onClick={async () => {
+                    // Increment views when clicking "View Project Details"
+                    await projectsService.incrementViews(project.id)
+                  }}
                 >
                   View Project Details
                   <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />

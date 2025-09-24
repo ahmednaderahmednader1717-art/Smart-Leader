@@ -78,23 +78,32 @@ const ProjectCharts = ({ projects }: ProjectChartsProps) => {
     return acc
   }, {} as Record<string, number>)
 
+  // Create dynamic colors based on status
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Available':
+        return { bg: 'rgba(16, 185, 129, 0.8)', border: 'rgba(16, 185, 129, 1)' } // Green
+      case 'Under Construction':
+        return { bg: 'rgba(59, 130, 246, 0.8)', border: 'rgba(59, 130, 246, 1)' } // Blue
+      case 'Coming Soon':
+        return { bg: 'rgba(245, 158, 11, 0.8)', border: 'rgba(245, 158, 11, 1)' } // Yellow
+      case 'Completed':
+        return { bg: 'rgba(139, 92, 246, 0.8)', border: 'rgba(139, 92, 246, 1)' } // Purple
+      case 'Sold Out':
+        return { bg: 'rgba(239, 68, 68, 0.8)', border: 'rgba(239, 68, 68, 1)' } // Red
+      default:
+        return { bg: 'rgba(107, 114, 128, 0.8)', border: 'rgba(107, 114, 128, 1)' } // Gray
+    }
+  }
+
+  const statusLabels = Object.keys(statusCounts)
   const statusData = {
-    labels: Object.keys(statusCounts),
+    labels: statusLabels,
     datasets: [
       {
         data: Object.values(statusCounts),
-        backgroundColor: [
-          'rgba(16, 185, 129, 0.8)', // Available - Green
-          'rgba(59, 130, 246, 0.8)', // Under Construction - Blue
-          'rgba(245, 158, 11, 0.8)', // Coming Soon - Yellow
-          'rgba(139, 92, 246, 0.8)', // Completed - Purple
-        ],
-        borderColor: [
-          'rgba(16, 185, 129, 1)',
-          'rgba(59, 130, 246, 1)',
-          'rgba(245, 158, 11, 1)',
-          'rgba(139, 92, 246, 1)',
-        ],
+        backgroundColor: statusLabels.map(status => getStatusColor(status).bg),
+        borderColor: statusLabels.map(status => getStatusColor(status).border),
         borderWidth: 2,
       },
     ],
