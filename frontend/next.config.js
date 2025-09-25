@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // تحسين الأداء وتقليل الحجم
+  // Performance optimization and size reduction
   compress: true,
   poweredByHeader: false,
   swcMinify: true,
   
-  // تحسين الصور
+  // Image optimization
   images: {
     domains: ['localhost', 'res.cloudinary.com', 'images.unsplash.com', 'firebasestorage.googleapis.com'],
     formats: ['image/webp', 'image/avif'],

@@ -10,27 +10,13 @@ services:
         value: production
       - key: PORT
         value: 5000
-      - key: MONGODB_URI
-        fromDatabase:
-          name: smart-leader-db
-          property: connectionString
-      - key: JWT_SECRET
-        generateValue: true
       - key: FRONTEND_URL
         value: https://smart-leader-real-estate.vercel.app
-      - key: EMAIL_HOST
-        value: smtp.gmail.com
-      - key: EMAIL_PORT
-        value: 587
-      - key: EMAIL_USER
+      - key: FIREBASE_PRIVATE_KEY_ID
         sync: false
-      - key: EMAIL_PASS
+      - key: FIREBASE_PRIVATE_KEY
         sync: false
-      - key: EMAIL_FROM
+      - key: FIREBASE_CLIENT_EMAIL
         sync: false
-      - key: EMAIL_TO
+      - key: FIREBASE_CLIENT_ID
         sync: false
-
-databases:
-  - name: smart-leader-db
-    plan: free

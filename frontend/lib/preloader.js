@@ -73,3 +73,5 @@ class Preloader {
 }
 
 export const preloader = new Preloader()
+
+

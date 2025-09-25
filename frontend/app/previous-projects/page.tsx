@@ -3,11 +3,11 @@ import PreviousProjectsHero from '@/components/PreviousProjectsHero'
 import PreviousProjectsGrid from '@/components/PreviousProjectsGrid'
 
 export const metadata: Metadata = {
-  title: 'المشاريع السابقة - Smart Leader',
-  description: 'استكشف مشاريعنا العقارية المكتملة في مصر. شاهد محفظتنا من التطويرات الناجحة والعملاء الراضين.',
+  title: 'Previous Projects - Smart Leader',
+  description: 'Explore our completed real estate projects in Egypt. View our portfolio of successful developments and satisfied clients.',
   openGraph: {
-    title: 'المشاريع السابقة - Smart Leader',
-    description: 'استكشف مشاريعنا العقارية المكتملة في مصر. شاهد محفظتنا من التطويرات الناجحة والعملاء الراضين.',
+    title: 'Previous Projects - Smart Leader',
+    description: 'Explore our completed real estate projects in Egypt. View our portfolio of successful developments and satisfied clients.',
   },
 }
 

@@ -81,7 +81,7 @@ const AboutPreview = () => {
               href="/about"
               className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors group"
             >
-              تعرف علينا أكثر
+              Learn More About Us
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </motion.div>
@@ -97,7 +97,7 @@ const AboutPreview = () => {
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-                alt="About Qawafil Real Estate"
+                alt="About Smart Leader Real Estate"
                 className="w-full h-[500px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>

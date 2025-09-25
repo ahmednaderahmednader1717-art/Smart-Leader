@@ -105,3 +105,5 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({
 }
 
 export default VirtualizedGrid
+
+

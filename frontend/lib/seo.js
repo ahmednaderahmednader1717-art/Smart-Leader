@@ -64,3 +64,5 @@ export const generatePageSEO = (page, data = {}) => {
     }
   }
 }
+
+

@@ -1,7 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { db } = require('../config/firebase');
-const admin = require('firebase-admin');
+const { db, admin } = require('../config/firebase');
 
 const router = express.Router();
 

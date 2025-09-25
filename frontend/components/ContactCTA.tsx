@@ -16,11 +16,11 @@ const ContactCTA = () => {
           className="text-center"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            هل أنت مستعد للعثور على عقارك المثالي؟
+            Are you ready to find your perfect property?
           </h2>
           <p className="text-xl text-blue-100 dark:text-blue-200 mb-12 max-w-3xl mx-auto">
-            تواصل مع فريقنا الخبير اليوم. نحن هنا لمساعدتك في العثور على 
-            العقار المثالي الذي يلبي احتياجاتك ويتجاوز توقعاتك.
+            Contact our expert team today. We are here to help you find the 
+            perfect property that meets your needs and exceeds your expectations.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
@@ -34,7 +34,7 @@ const ContactCTA = () => {
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Phone className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">اتصل بنا</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">Call Us</h3>
               <p className="text-blue-100 dark:text-blue-200">+20 123 456 7890</p>
             </motion.div>
 
@@ -48,7 +48,7 @@ const ContactCTA = () => {
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Mail className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">راسلنا</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">Email Us</h3>
               <p className="text-blue-100 dark:text-blue-200">info@smartleader.com</p>
             </motion.div>
 

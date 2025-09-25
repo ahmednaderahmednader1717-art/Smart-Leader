@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -219,12 +219,12 @@ const AdminDashboard = () => {
         const mockProjects: Project[] = [
           {
             id: 1,
-            title: 'شقق فاخرة في التجمع الخامس',
-            description: 'شقق فاخرة مع إطلالة رائعة',
-            longDescription: 'وصف تفصيلي للمشروع...',
-            location: 'التجمع الخامس، القاهرة',
-            price: 'بداية من 2,500,000 جنيه',
-            area: '120-200 متر مربع',
+            title: 'Luxury Apartments in New Cairo',
+            description: 'Luxury apartments with stunning views',
+            longDescription: 'Detailed project description...',
+            location: 'New Cairo, Cairo',
+            price: 'Starting from 2,500,000 EGP',
+            area: '120-200 sqm',
             completionDate: 'Q2 2025',
             status: 'Available',
             specifications: {
@@ -232,9 +232,9 @@ const AdminDashboard = () => {
               bathrooms: '2-3',
               parking: '1-2',
               floor: '3-15',
-              type: 'شقة'
+              type: 'Apartment'
             },
-            features: ['تشطيب فاخر', 'إطلالة رائعة'],
+            features: ['Luxury finishing', 'Stunning views'],
             images: [],
             createdAt: new Date().toISOString(),
             views: 150,
@@ -245,22 +245,22 @@ const AdminDashboard = () => {
           },
           {
             id: 2,
-            title: 'فيلات في الشروق',
-            description: 'فيلات فاخرة في الشروق',
-            longDescription: 'وصف تفصيلي للمشروع...',
-            location: 'الشروق، القاهرة',
-            price: 'بداية من 5,000,000 جنيه',
-            area: '300-500 متر مربع',
+            title: 'Villas in Shorouk',
+            description: 'Luxury villas in Shorouk',
+            longDescription: 'Detailed project description...',
+            location: 'Shorouk, Cairo',
+            price: 'Starting from 5,000,000 EGP',
+            area: '300-500 sqm',
             completionDate: 'Q3 2025',
             status: 'Under Construction',
             specifications: {
               bedrooms: '4-5',
               bathrooms: '4-5',
               parking: '2-3',
-              floor: 'أرضي + 2',
-              type: 'فيلا'
+              floor: 'Ground + 2',
+              type: 'Villa'
             },
-            features: ['حديقة خاصة', 'مسبح'],
+            features: ['Private garden', 'Swimming pool'],
             images: [],
             createdAt: new Date().toISOString(),
             views: 89,
@@ -271,12 +271,12 @@ const AdminDashboard = () => {
           },
           {
             id: 3,
-            title: 'شقق في التجمع الخامس',
-            description: 'شقق حديثة في التجمع الخامس',
-            longDescription: 'وصف تفصيلي للمشروع...',
-            location: 'التجمع الخامس، القاهرة',
-            price: 'بداية من 2,500,000 جنيه',
-            area: '120-180 متر مربع',
+            title: 'Apartments in New Cairo',
+            description: 'Modern apartments in New Cairo',
+            longDescription: 'Detailed project description...',
+            location: 'New Cairo, Cairo',
+            price: 'Starting from 2,500,000 EGP',
+            area: '120-180 sqm',
             completionDate: 'Q4 2024',
             status: 'Available',
             specifications: {
@@ -284,9 +284,9 @@ const AdminDashboard = () => {
               bathrooms: '2-3',
               parking: '1-2',
               floor: '5-20',
-              type: 'شقة'
+              type: 'Apartment'
             },
-            features: ['تشطيب عادي', 'إطلالة جيدة'],
+            features: ['Standard finishing', 'Good views'],
             images: [],
             createdAt: new Date().toISOString(),
             views: 45,
@@ -312,12 +312,12 @@ const AdminDashboard = () => {
       const mockProjects: Project[] = [
         {
           id: 1,
-          title: 'شقق فاخرة في التجمع الخامس',
-          description: 'شقق فاخرة مع إطلالة رائعة',
-          longDescription: 'وصف تفصيلي للمشروع...',
-          location: 'التجمع الخامس، القاهرة',
-          price: 'بداية من 2,500,000 جنيه',
-          area: '120-200 متر مربع',
+          title: 'Luxury Apartments in New Cairo',
+          description: 'Luxury apartments with stunning views',
+          longDescription: 'Detailed project description...',
+          location: 'New Cairo, Cairo',
+          price: 'Starting from 2,500,000 EGP',
+          area: '120-200 sqm',
           completionDate: 'Q2 2025',
           status: 'Available',
           specifications: {
@@ -325,9 +325,9 @@ const AdminDashboard = () => {
             bathrooms: '2-3',
             parking: '1-2',
             floor: '3-15',
-            type: 'شقة'
+            type: 'Apartment'
           },
-          features: ['تشطيب فاخر', 'إطلالة رائعة'],
+          features: ['Luxury finishing', 'Stunning views'],
           images: [],
           createdAt: new Date().toISOString(),
           views: 150,
@@ -338,22 +338,22 @@ const AdminDashboard = () => {
         },
         {
           id: 2,
-          title: 'فيلات في الشروق',
-          description: 'فيلات فاخرة في الشروق',
-          longDescription: 'وصف تفصيلي للمشروع...',
-          location: 'الشروق، القاهرة',
-          price: 'بداية من 5,000,000 جنيه',
-          area: '300-500 متر مربع',
+          title: 'Villas in Shorouk',
+          description: 'Luxury villas in Shorouk',
+          longDescription: 'Detailed project description...',
+          location: 'Shorouk, Cairo',
+          price: 'Starting from 5,000,000 EGP',
+          area: '300-500 sqm',
           completionDate: 'Q3 2025',
           status: 'Under Construction',
           specifications: {
             bedrooms: '4-5',
             bathrooms: '4-5',
             parking: '2-3',
-            floor: 'أرضي + 2',
-            type: 'فيلا'
+            floor: 'Ground + 2',
+            type: 'Villa'
           },
-          features: ['حديقة خاصة', 'مسبح'],
+          features: ['Private garden', 'Swimming pool'],
           images: [],
           createdAt: new Date().toISOString(),
           views: 89,
@@ -364,12 +364,12 @@ const AdminDashboard = () => {
         },
         {
           id: 3,
-          title: 'شقق في التجمع الخامس',
-          description: 'شقق حديثة في التجمع الخامس',
-          longDescription: 'وصف تفصيلي للمشروع...',
-          location: 'التجمع الخامس، القاهرة',
-          price: 'بداية من 2,500,000 جنيه',
-          area: '120-180 متر مربع',
+          title: 'Apartments in New Cairo',
+          description: 'Modern apartments in New Cairo',
+          longDescription: 'Detailed project description...',
+          location: 'New Cairo, Cairo',
+          price: 'Starting from 2,500,000 EGP',
+          area: '120-180 sqm',
           completionDate: 'Q4 2024',
           status: 'Available',
           specifications: {
@@ -377,9 +377,9 @@ const AdminDashboard = () => {
             bathrooms: '2-3',
             parking: '1-2',
             floor: '5-20',
-            type: 'شقة'
+            type: 'Apartment'
           },
-          features: ['تشطيب عادي', 'إطلالة جيدة'],
+          features: ['Standard finishing', 'Good views'],
           images: [],
           createdAt: new Date().toISOString(),
           views: 45,
@@ -394,19 +394,19 @@ const AdminDashboard = () => {
       const mockContacts: Contact[] = [
         {
           id: 1,
-          name: 'أحمد محمد',
+          name: 'Ahmed Mohamed',
           email: 'ahmed@example.com',
           phone: '+20 123 456 7890',
-          message: 'أريد الاستفسار عن الشقق المتاحة',
+          message: 'I would like to inquire about available apartments',
           status: 'New',
           createdAt: new Date().toISOString()
         },
         {
           id: 2,
-          name: 'فاطمة علي',
+          name: 'Fatma Ali',
           email: 'fatma@example.com',
           phone: '+20 987 654 3210',
-          message: 'متى سيكون المشروع جاهز؟',
+          message: 'When will the project be ready?',
           status: 'Resolved',
           createdAt: new Date().toISOString()
         }
@@ -1298,7 +1298,7 @@ Smart Leader Team`
                           {contact.status === 'New' ? 'New' : 'Replied'}
                         </span>
                         <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(contact.createdAt).toLocaleDateString('ar-EG')}
+                          {new Date(contact.createdAt).toLocaleDateString('en-US')}
                         </span>
                       </div>
                     </div>
@@ -1734,7 +1734,7 @@ Smart Leader Team`
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          {new Date(contact.createdAt).toLocaleDateString('ar-EG')}
+                          {new Date(contact.createdAt).toLocaleDateString('en-US')}
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex space-x-2">
@@ -1791,7 +1791,7 @@ Smart Leader Team`
                           {contact.status === 'New' ? 'New' : 'Replied'}
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(contact.createdAt).toLocaleDateString('ar-EG')}
+                          {new Date(contact.createdAt).toLocaleDateString('en-US')}
                         </span>
                       </div>
                       <div className="flex space-x-2">

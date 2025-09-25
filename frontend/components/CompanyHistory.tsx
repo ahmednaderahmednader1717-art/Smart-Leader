@@ -8,7 +8,7 @@ const CompanyHistory = () => {
     {
       year: '2008',
       title: 'Company Founded',
-      description: 'Qawafil Real Estate was established with a vision to revolutionize the Egyptian real estate market.',
+      description: 'Smart Leader Real Estate was established with a vision to revolutionize the Egyptian real estate market.',
       icon: Calendar,
     },
     {

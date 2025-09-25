@@ -5,11 +5,11 @@ import TeamSection from '@/components/TeamSection'
 import ValuesSection from '@/components/ValuesSection'
 
 export const metadata: Metadata = {
-  title: 'من نحن - Smart Leader',
-  description: 'تعرف على Smart Leader - 15+ سنة من التميز في العقارات المصرية. رؤيتنا ورسالتنا وفريقنا المتفاني.',
+  title: 'About Us - Smart Leader',
+  description: 'Learn about Smart Leader - 15+ years of excellence in Egyptian real estate. Our vision, mission, and dedicated team.',
   openGraph: {
-    title: 'من نحن - Smart Leader',
-    description: 'تعرف على Smart Leader - 15+ سنة من التميز في العقارات المصرية. رؤيتنا ورسالتنا وفريقنا المتفاني.',
+    title: 'About Us - Smart Leader',
+    description: 'Learn about Smart Leader - 15+ years of excellence in Egyptian real estate. Our vision, mission, and dedicated team.',
   },
 }
 
