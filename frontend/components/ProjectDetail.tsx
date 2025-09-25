@@ -205,8 +205,19 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
                 <img
                   src={project.images[selectedImage]}
                   alt={project.title}
-                  className="w-full h-96 object-cover"
+                  className={`w-full h-96 object-cover ${
+                    project.status === 'Sold Out' ? 'grayscale-[0.4]' : ''
+                  }`}
                 />
+                
+                {/* SOLD OUT Overlay */}
+                {project.status === 'Sold Out' && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="bg-red-600 text-white px-8 py-4 rounded-lg font-bold text-2xl shadow-lg transform rotate-[-5deg]">
+                      SOLD OUT
+                    </div>
+                  </div>
+                )}
                 <div className="absolute top-4 right-4 flex space-x-2">
                   <button
                     onClick={() => setIsFavorite(!isFavorite)}
@@ -252,7 +263,11 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
               className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8"
             >
               <div className="flex items-center justify-between mb-4">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                <h1 className={`text-3xl font-bold ${
+                  project.status === 'Sold Out' 
+                    ? 'text-gray-500 dark:text-gray-400 line-through'
+                    : 'text-gray-900 dark:text-white'
+                }`}>
                   {project.title}
                 </h1>
                 <div className="flex items-center space-x-2">
@@ -292,12 +307,20 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
                 </div>
               )}
               
-              <div className="flex items-center text-gray-600 dark:text-gray-300 mb-6">
+              <div className={`flex items-center mb-6 ${
+                project.status === 'Sold Out' 
+                  ? 'text-gray-400 dark:text-gray-500'
+                  : 'text-gray-600 dark:text-gray-300'
+              }`}>
                 <MapPin className="h-5 w-5 mr-2" />
                 <span>{project.location}</span>
               </div>
               
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+              <p className={`leading-relaxed mb-6 ${
+                project.status === 'Sold Out' 
+                  ? 'text-gray-400 dark:text-gray-500'
+                  : 'text-gray-600 dark:text-gray-300'
+              }`}>
                 {project.longDescription}
               </p>
               
@@ -354,8 +377,12 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
               className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sticky top-8"
             >
               <div className="text-center mb-6">
-                <div className="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-2">
-                  {project.price}
+                <div className={`text-3xl font-bold mb-2 ${
+                  project.status === 'Sold Out' 
+                    ? 'text-gray-400 dark:text-gray-500 line-through'
+                    : 'text-primary-600 dark:text-primary-400'
+                }`}>
+                  {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   project.status === 'Sold Out' 
@@ -368,16 +395,40 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
               
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">Completion</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{project.completionDate}</span>
+                  <span className={`${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}>Completion</span>
+                  <span className={`font-medium ${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-900 dark:text-white'
+                  }`}>{project.completionDate}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">Type</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{project.specifications.type}</span>
+                  <span className={`${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}>Type</span>
+                  <span className={`font-medium ${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-900 dark:text-white'
+                  }`}>{project.specifications.type}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">Floors</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{project.specifications.floor}</span>
+                  <span className={`${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}>Floors</span>
+                  <span className={`font-medium ${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-900 dark:text-white'
+                  }`}>{project.specifications.floor}</span>
                 </div>
               </div>
               

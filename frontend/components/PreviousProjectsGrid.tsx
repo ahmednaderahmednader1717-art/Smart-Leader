@@ -333,18 +333,32 @@ const PreviousProjectsGrid = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+              className={`bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 relative ${
+                project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
+              }`}
             >
               <div className="relative">
                 <img
                   src={project.images && project.images.length > 0 ? project.images[0] : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'}
                   alt={project.title}
-                  className="w-full h-64 object-cover"
+                  className={`w-full h-64 object-cover ${
+                    project.status === 'Sold Out' ? 'grayscale-[0.4]' : ''
+                  }`}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
                   }}
                 />
+                
+                {/* SOLD OUT Overlay */}
+                {project.status === 'Sold Out' && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold text-lg shadow-lg transform rotate-[-5deg]">
+                      SOLD OUT
+                    </div>
+                  </div>
+                )}
+                
                 <div className="absolute top-4 right-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center ${
                     project.status === 'Sold Out' 
@@ -358,7 +372,11 @@ const PreviousProjectsGrid = () => {
               </div>
               
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className={`text-xl font-semibold mb-2 ${
+                  project.status === 'Sold Out' 
+                    ? 'text-gray-500 dark:text-gray-400 line-through'
+                    : 'text-gray-900 dark:text-white'
+                }`}>
                   {project.title}
                 </h3>
                 
@@ -367,37 +385,60 @@ const PreviousProjectsGrid = () => {
                   <span className="text-sm">{project.location}</span>
                 </div>
                 
-                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
+                <p className={`text-sm mb-4 line-clamp-2 ${
+                  project.status === 'Sold Out' 
+                    ? 'text-gray-400 dark:text-gray-500'
+                    : 'text-gray-600 dark:text-gray-300'
+                }`}>
                   {project.description}
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                  <div className="flex items-center text-gray-600 dark:text-gray-300">
+                  <div className={`flex items-center ${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}>
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>{project.completionDate}</span>
                   </div>
-                  <div className="flex items-center text-gray-600 dark:text-gray-300">
+                  <div className={`flex items-center ${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}>
                     <Square className="h-4 w-4 mr-2" />
                     <span>{project.area}</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <div className={`flex items-center justify-between text-sm mb-4 ${
+                  project.status === 'Sold Out' 
+                    ? 'text-gray-400 dark:text-gray-500'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}>
                   <span>{project.views.toLocaleString()} views</span>
                   <span>{project.specifications.type}</span>
                 </div>
                 
-                <Link
-                  href={`/projects/${project.id}`}
-                  className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
-                  onClick={async () => {
-                    // Increment views when clicking "View Project Details"
-                    await projectsService.incrementViews(project.id)
-                  }}
-                >
-                  View Project Details
-                  <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                {project.status === 'Sold Out' ? (
+                  <div className="inline-flex items-center text-gray-400 dark:text-gray-500 font-medium text-sm">
+                    <span className="line-through">View Project Details</span>
+                    <span className="ml-2 text-red-500 font-bold">SOLD OUT</span>
+                  </div>
+                ) : (
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
+                    onClick={async () => {
+                      // Increment views when clicking "View Project Details"
+                      await projectsService.incrementViews(project.id)
+                    }}
+                  >
+                    View Project Details
+                    <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                )}
               </div>
             </motion.div>
             ))

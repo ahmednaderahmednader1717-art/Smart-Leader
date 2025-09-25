@@ -150,14 +150,28 @@ const ProjectsGrid = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+              className={`bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 relative ${
+                project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
+              }`}
             >
               <div className="relative">
                 <img
                   src={project.images[0] || '/placeholder.jpg'}
                   alt={project.title}
-                  className="w-full h-64 object-cover"
+                  className={`w-full h-64 object-cover ${
+                    project.status === 'Sold Out' ? 'grayscale-[0.4]' : ''
+                  }`}
                 />
+                
+                {/* SOLD OUT Overlay */}
+                {project.status === 'Sold Out' && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold text-lg shadow-lg transform rotate-[-5deg]">
+                      SOLD OUT
+                    </div>
+                  </div>
+                )}
+                
                 <div className="absolute top-4 right-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     project.status === 'Sold Out' 
@@ -170,37 +184,61 @@ const ProjectsGrid = () => {
               </div>
               
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className={`text-xl font-semibold mb-2 ${
+                  project.status === 'Sold Out' 
+                    ? 'text-gray-500 dark:text-gray-400 line-through'
+                    : 'text-gray-900 dark:text-white'
+                }`}>
                   {project.title}
                 </h3>
                 
-                <div className="flex items-center text-gray-600 dark:text-gray-300 mb-3">
+                <div className={`flex items-center mb-3 ${
+                  project.status === 'Sold Out' 
+                    ? 'text-gray-400 dark:text-gray-500'
+                    : 'text-gray-600 dark:text-gray-300'
+                }`}>
                   <MapPin className="h-4 w-4 mr-2" />
                   <span className="text-sm">{project.location}</span>
                 </div>
                 
-                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
+                <p className={`text-sm mb-4 line-clamp-2 ${
+                  project.status === 'Sold Out' 
+                    ? 'text-gray-400 dark:text-gray-500'
+                    : 'text-gray-600 dark:text-gray-300'
+                }`}>
                   {project.description}
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                  <div className="flex items-center text-gray-600 dark:text-gray-300">
+                  <div className={`flex items-center ${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}>
                     <Square className="h-4 w-4 mr-2" />
                     <span>{project.area}</span>
                   </div>
-                  <div className="flex items-center text-gray-600 dark:text-gray-300">
+                  <div className={`flex items-center ${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}>
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>{project.completionDate}</span>
                   </div>
                 </div>
                 
                  <div className="flex items-center justify-between">
-                   <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                     {project.price}
+                   <span className={`text-lg font-semibold ${
+                     project.status === 'Sold Out' 
+                       ? 'text-gray-400 dark:text-gray-500 line-through'
+                       : 'text-primary-600 dark:text-primary-400'
+                   }`}>
+                     {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
                    </span>
                   {project.status === 'Sold Out' ? (
-                    <span className="inline-flex items-center text-gray-400 dark:text-gray-500 font-medium text-sm">
-                      Sold Out
+                    <span className="inline-flex items-center text-red-500 dark:text-red-400 font-bold text-sm">
+                      SOLD OUT
                     </span>
                   ) : (
                     <Link

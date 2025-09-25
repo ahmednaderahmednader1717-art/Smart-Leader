@@ -83,7 +83,9 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden h-full"
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden h-full relative ${
+          project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
+        }`}
       >
           {/* Project Image */}
           <div className="relative h-48 bg-gray-200 dark:bg-gray-700">
@@ -91,7 +93,9 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
               <img
                 src={project.images[0]}
                 alt={project.title}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${
+                  project.status === 'Sold Out' ? 'grayscale-[0.4]' : ''
+                }`}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
@@ -102,6 +106,15 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
                 <div className="text-gray-400 dark:text-gray-500">
                   <Upload className="h-12 w-12 mx-auto mb-2" />
                   <p className="text-sm">No Image</p>
+                </div>
+              </div>
+            )}
+            
+            {/* SOLD OUT Overlay */}
+            {project.status === 'Sold Out' && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <div className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transform rotate-[-5deg]">
+                  SOLD OUT
                 </div>
               </div>
             )}
@@ -130,22 +143,40 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
 
           {/* Project Info */}
           <div className="p-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+            <h3 className={`font-semibold mb-2 line-clamp-2 ${
+              project.status === 'Sold Out' 
+                ? 'text-gray-500 dark:text-gray-400 line-through'
+                : 'text-gray-900 dark:text-white'
+            }`}>
               {project.title}
             </h3>
             
             <div className="space-y-2 mb-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className={`flex items-center space-x-2 text-sm ${
+                project.status === 'Sold Out' 
+                  ? 'text-gray-400 dark:text-gray-500'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}>
                 <MapPin className="h-4 w-4" />
                 <span className="truncate">{project.location}</span>
               </div>
               
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className={`flex items-center space-x-2 text-sm ${
+                project.status === 'Sold Out' 
+                  ? 'text-gray-400 dark:text-gray-500'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}>
                 <DollarSign className="h-4 w-4" />
-                <span>{project.price}</span>
+                <span className={project.status === 'Sold Out' ? 'line-through' : ''}>
+                  {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
+                </span>
               </div>
               
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className={`flex items-center space-x-2 text-sm ${
+                project.status === 'Sold Out' 
+                  ? 'text-gray-400 dark:text-gray-500'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}>
                 <Eye className="h-4 w-4" />
                 <span>{project.views.toLocaleString()} views</span>
               </div>
@@ -194,7 +225,9 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
   const ListItem = ({ project }: { project: Project }) => {
     return (
       <div className="px-6 py-4">
-        <div className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <div className={`flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+          project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
+        }`}>
           {/* Selection Checkbox */}
           <button
             onClick={() => onSelectProject(project.id)}
@@ -224,10 +257,18 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
           
           {/* Project Info */}
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-gray-900 dark:text-white truncate">
+            <h4 className={`font-medium truncate ${
+              project.status === 'Sold Out' 
+                ? 'text-gray-500 dark:text-gray-400 line-through'
+                : 'text-gray-900 dark:text-white'
+            }`}>
               {project.title}
             </h4>
-            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+            <p className={`text-sm truncate ${
+              project.status === 'Sold Out' 
+                ? 'text-gray-400 dark:text-gray-500'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}>
               {project.location}
             </p>
           </div>
@@ -240,8 +281,12 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
           </div>
 
           {/* Price */}
-          <div className="flex-shrink-0 text-sm text-gray-900 dark:text-white">
-            {project.price}
+          <div className={`flex-shrink-0 text-sm ${
+            project.status === 'Sold Out' 
+              ? 'text-gray-400 dark:text-gray-500 line-through'
+              : 'text-gray-900 dark:text-white'
+          }`}>
+            {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
           </div>
 
           {/* Rating */}
