@@ -150,8 +150,8 @@ const ProjectsGrid = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className={`bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 relative cursor-pointer ${
-                project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
+              className={`group bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 relative cursor-pointer ${
+                project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3] hover:opacity-90 hover:grayscale-[0.1]' : 'hover:bg-gray-50 dark:hover:bg-gray-600'
               }`}
               onClick={async () => {
                 // Increment views when clicking the card
@@ -242,10 +242,10 @@ const ProjectsGrid = () => {
                    }`}>
                      {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
                    </span>
-                  <div className={`inline-flex items-center font-medium text-sm ${
+                  <div className={`inline-flex items-center font-medium text-sm transition-colors duration-200 ${
                     project.status === 'Sold Out' 
-                      ? 'text-gray-500 dark:text-gray-400'
-                      : 'text-primary-600 dark:text-primary-400'
+                      ? 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
+                      : 'text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300'
                   }`}>
                     {project.status === 'Sold Out' ? (
                       <>

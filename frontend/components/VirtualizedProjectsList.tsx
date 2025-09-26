@@ -84,8 +84,8 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden h-full relative cursor-pointer ${
-          project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 transition-all overflow-hidden h-full relative cursor-pointer ${
+          project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3] hover:opacity-90 hover:grayscale-[0.1]' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
         }`}
         onClick={() => {
           // Navigate to project details
@@ -251,8 +251,8 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
     return (
       <div className="px-6 py-4">
         <div 
-          className={`flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
-            project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
+          className={`flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-lg hover:scale-[1.01] hover:-translate-y-0.5 transition-all cursor-pointer ${
+            project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3] hover:opacity-90 hover:grayscale-[0.1]' : ''
           }`}
           onClick={() => {
             // Navigate to project details
