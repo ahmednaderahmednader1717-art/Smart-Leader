@@ -374,7 +374,7 @@ const PreviousProjectsGrid = () => {
               <div className="p-6">
                 <h3 className={`text-xl font-semibold mb-2 ${
                   project.status === 'Sold Out' 
-                    ? 'text-gray-500 dark:text-gray-400 line-through'
+                    ? 'text-gray-500 dark:text-gray-400'
                     : 'text-gray-900 dark:text-white'
                 }`}>
                   {project.title}
@@ -435,13 +435,13 @@ const PreviousProjectsGrid = () => {
                 >
                   {project.status === 'Sold Out' ? (
                     <>
-                      <span className="line-through">View Project Details</span>
+                      <span>View Project Details</span>
                       <span className="ml-2 text-red-500 font-bold">(SOLD OUT)</span>
                     </>
                   ) : (
                     <>
-                      View Project Details
-                      <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  View Project Details
+                  <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
                 </Link>

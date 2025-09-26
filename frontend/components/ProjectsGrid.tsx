@@ -186,7 +186,7 @@ const ProjectsGrid = () => {
               <div className="p-6">
                 <h3 className={`text-xl font-semibold mb-2 ${
                   project.status === 'Sold Out' 
-                    ? 'text-gray-500 dark:text-gray-400 line-through'
+                    ? 'text-gray-500 dark:text-gray-400'
                     : 'text-gray-900 dark:text-white'
                 }`}>
                   {project.title}
@@ -231,7 +231,7 @@ const ProjectsGrid = () => {
                  <div className="flex items-center justify-between">
                    <span className={`text-lg font-semibold ${
                      project.status === 'Sold Out' 
-                       ? 'text-gray-400 dark:text-gray-500 line-through'
+                       ? 'text-gray-400 dark:text-gray-500'
                        : 'text-primary-600 dark:text-primary-400'
                    }`}>
                      {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
@@ -250,7 +250,7 @@ const ProjectsGrid = () => {
                   >
                     {project.status === 'Sold Out' ? (
                       <>
-                        <span className="line-through">View Details</span>
+                        <span>View Details</span>
                         <span className="ml-2 text-red-500 font-bold">(SOLD OUT)</span>
                       </>
                     ) : (

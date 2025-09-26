@@ -265,7 +265,7 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
               <div className="flex items-center justify-between mb-4">
                 <h1 className={`text-3xl font-bold ${
                   project.status === 'Sold Out' 
-                    ? 'text-gray-500 dark:text-gray-400 line-through'
+                    ? 'text-gray-500 dark:text-gray-400'
                     : 'text-gray-900 dark:text-white'
                 }`}>
                   {project.title}
@@ -379,7 +379,7 @@ const ProjectDetail = ({ projectId }: ProjectDetailProps) => {
               <div className="text-center mb-6">
                 <div className={`text-3xl font-bold mb-2 ${
                   project.status === 'Sold Out' 
-                    ? 'text-gray-400 dark:text-gray-500 line-through'
+                    ? 'text-gray-400 dark:text-gray-500'
                     : 'text-primary-600 dark:text-primary-400'
                 }`}>
                   {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}

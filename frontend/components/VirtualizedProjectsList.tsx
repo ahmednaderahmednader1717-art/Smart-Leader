@@ -146,7 +146,7 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
           <div className="p-4">
             <h3 className={`font-semibold mb-2 line-clamp-2 ${
               project.status === 'Sold Out' 
-                ? 'text-gray-500 dark:text-gray-400 line-through'
+                ? 'text-gray-500 dark:text-gray-400'
                 : 'text-gray-900 dark:text-white'
             }`}>
               {project.title}
@@ -168,7 +168,7 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
                   : 'text-gray-600 dark:text-gray-400'
               }`}>
                 <DollarSign className="h-4 w-4" />
-                <span className={project.status === 'Sold Out' ? 'line-through' : ''}>
+                <span>
                   {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
                 </span>
               </div>
@@ -273,7 +273,7 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
           <div className="flex-1 min-w-0">
             <h4 className={`font-medium truncate ${
               project.status === 'Sold Out' 
-                ? 'text-gray-500 dark:text-gray-400 line-through'
+                ? 'text-gray-500 dark:text-gray-400'
                 : 'text-gray-900 dark:text-white'
             }`}>
               {project.title}
@@ -297,7 +297,7 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
           {/* Price */}
           <div className={`flex-shrink-0 text-sm ${
             project.status === 'Sold Out' 
-              ? 'text-gray-400 dark:text-gray-500 line-through'
+              ? 'text-gray-400 dark:text-gray-500'
               : 'text-gray-900 dark:text-white'
           }`}>
             {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
