@@ -62,12 +62,6 @@
       "static/chunks/main-app.js",
       "static/chunks/_app-pages-browser_lib_firebaseServices_js.js",
       "static/chunks/app/projects/[id]/page.js"
-    ],
-    "/not-found": [
-      "static/chunks/webpack.js",
-      "static/chunks/vendors.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/not-found.js"
     ]
   }
 }

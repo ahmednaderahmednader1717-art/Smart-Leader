@@ -84,9 +84,13 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden h-full relative ${
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden h-full relative cursor-pointer ${
           project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
         }`}
+        onClick={() => {
+          // Navigate to project details
+          window.location.href = `/projects/${project.id}`
+        }}
       >
           {/* Project Image */}
           <div className="relative h-48 bg-gray-200 dark:bg-gray-700">
@@ -197,7 +201,10 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => onEditProject(project)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEditProject(project)
+                  }}
                   className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
                 >
                   <Edit className="h-3 w-3" />
@@ -205,7 +212,10 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
                 </button>
                 
                 <button
-                  onClick={() => onDeleteProject(project.id)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDeleteProject(project.id)
+                  }}
                   className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -215,6 +225,7 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
                 {/* View Details Link */}
                 <Link
                   href={`/projects/${project.id}`}
+                  onClick={(e) => e.stopPropagation()}
                   className={`flex items-center space-x-1 px-3 py-1 rounded text-sm transition-colors ${
                     project.status === 'Sold Out' 
                       ? 'bg-gray-500 text-white hover:bg-gray-600'
@@ -239,12 +250,21 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
   const ListItem = ({ project }: { project: Project }) => {
     return (
       <div className="px-6 py-4">
-        <div className={`flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-          project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
-        }`}>
+        <div 
+          className={`flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
+            project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
+          }`}
+          onClick={() => {
+            // Navigate to project details
+            window.location.href = `/projects/${project.id}`
+          }}
+        >
           {/* Selection Checkbox */}
           <button
-            onClick={() => onSelectProject(project.id)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onSelectProject(project.id)
+            }}
             className="flex-shrink-0"
           >
             {selectedProjects.has(project.id) ? (
@@ -331,19 +351,26 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
           {/* Actions */}
           <div className="flex-shrink-0 flex items-center space-x-2">
             <button
-              onClick={() => onEditProject(project)}
+              onClick={(e) => {
+                e.stopPropagation()
+                onEditProject(project)
+              }}
               className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
               <Edit className="h-4 w-4" />
             </button>
             <button
-              onClick={() => onDeleteProject(project.id)}
+              onClick={(e) => {
+                e.stopPropagation()
+                onDeleteProject(project.id)
+              }}
               className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
             >
               <Trash2 className="h-4 w-4" />
             </button>
             <Link
               href={`/projects/${project.id}`}
+              onClick={(e) => e.stopPropagation()}
               className={`${
                 project.status === 'Sold Out' 
                   ? 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'

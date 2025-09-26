@@ -150,9 +150,15 @@ const ProjectsGrid = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className={`bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 relative ${
+              className={`bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 relative cursor-pointer ${
                 project.status === 'Sold Out' ? 'opacity-75 grayscale-[0.3]' : ''
               }`}
+              onClick={async () => {
+                // Increment views when clicking the card
+                await projectsService.incrementViews(project.id)
+                // Navigate to project details
+                window.location.href = `/projects/${project.id}`
+              }}
             >
               <div className="relative">
                 <img
@@ -236,30 +242,23 @@ const ProjectsGrid = () => {
                    }`}>
                      {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
                    </span>
-                  <Link
-                    href={`/projects/${project.id}`}
-                    className={`inline-flex items-center font-medium text-sm group ${
-                      project.status === 'Sold Out' 
-                        ? 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                        : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'
-                    }`}
-                    onClick={async () => {
-                      // Increment views when clicking "View Details"
-                      await projectsService.incrementViews(project.id)
-                    }}
-                  >
+                  <div className={`inline-flex items-center font-medium text-sm ${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-500 dark:text-gray-400'
+                      : 'text-primary-600 dark:text-primary-400'
+                  }`}>
                     {project.status === 'Sold Out' ? (
                       <>
-                        <span>View Details</span>
+                        <span>Click to view details</span>
                         <span className="ml-2 text-red-500 font-bold">(SOLD OUT)</span>
                       </>
                     ) : (
                       <>
-                        View Details
-                        <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        <span>Click to view details</span>
+                        <ArrowRight className="ml-1 h-4 w-4" />
                       </>
                     )}
-                  </Link>
+                  </div>
                 </div>
               </div>
             </motion.div>
