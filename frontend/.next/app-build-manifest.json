@@ -22,18 +22,18 @@
       "static/chunks/_app-pages-browser_lib_firebaseServices_js.js",
       "static/chunks/app/projects/page.js"
     ],
+    "/about/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendors.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/about/page.js"
+    ],
     "/contact/page": [
       "static/chunks/webpack.js",
       "static/chunks/vendors.js",
       "static/chunks/main-app.js",
       "static/chunks/_app-pages-browser_components_ToastProvider_tsx-_app-pages-browser_lib_settingsContext_tsx.js",
       "static/chunks/app/contact/page.js"
-    ],
-    "/about/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/vendors.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/about/page.js"
     ],
     "/services/page": [
       "static/chunks/webpack.js",

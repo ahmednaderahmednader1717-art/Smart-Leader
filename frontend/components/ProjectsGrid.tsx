@@ -236,23 +236,30 @@ const ProjectsGrid = () => {
                    }`}>
                      {project.status === 'Sold Out' ? 'SOLD OUT' : project.price}
                    </span>
-                  {project.status === 'Sold Out' ? (
-                    <span className="inline-flex items-center text-red-500 dark:text-red-400 font-bold text-sm">
-                      SOLD OUT
-                    </span>
-                  ) : (
-                    <Link
-                      href={`/projects/${project.id}`}
-                      className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
-                      onClick={async () => {
-                        // Increment views when clicking "View Details"
-                        await projectsService.incrementViews(project.id)
-                      }}
-                    >
-                      View Details
-                      <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  )}
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className={`inline-flex items-center font-medium text-sm group ${
+                      project.status === 'Sold Out' 
+                        ? 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                        : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'
+                    }`}
+                    onClick={async () => {
+                      // Increment views when clicking "View Details"
+                      await projectsService.incrementViews(project.id)
+                    }}
+                  >
+                    {project.status === 'Sold Out' ? (
+                      <>
+                        <span className="line-through">View Details</span>
+                        <span className="ml-2 text-red-500 font-bold">(SOLD OUT)</span>
+                      </>
+                    ) : (
+                      <>
+                        View Details
+                        <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </Link>
                 </div>
               </div>
             </motion.div>

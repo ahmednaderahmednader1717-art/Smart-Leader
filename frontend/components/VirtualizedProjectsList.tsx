@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 import { 
   Edit, 
   Trash2, 
@@ -210,6 +211,19 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
                   <Trash2 className="h-3 w-3" />
                   <span>Delete</span>
                 </button>
+                
+                {/* View Details Link */}
+                <Link
+                  href={`/projects/${project.id}`}
+                  className={`flex items-center space-x-1 px-3 py-1 rounded text-sm transition-colors ${
+                    project.status === 'Sold Out' 
+                      ? 'bg-gray-500 text-white hover:bg-gray-600'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  <Eye className="h-3 w-3" />
+                  <span>{project.status === 'Sold Out' ? 'View (Sold)' : 'View'}</span>
+                </Link>
               </div>
               
               <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -328,6 +342,16 @@ const VirtualizedProjectsList: React.FC<VirtualizedProjectsListProps> = ({
             >
               <Trash2 className="h-4 w-4" />
             </button>
+            <Link
+              href={`/projects/${project.id}`}
+              className={`${
+                project.status === 'Sold Out' 
+                  ? 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  : 'text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300'
+              }`}
+            >
+              <Eye className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </div>

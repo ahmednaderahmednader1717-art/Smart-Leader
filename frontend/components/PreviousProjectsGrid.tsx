@@ -421,24 +421,30 @@ const PreviousProjectsGrid = () => {
                   <span>{project.specifications.type}</span>
                 </div>
                 
-                {project.status === 'Sold Out' ? (
-                  <div className="inline-flex items-center text-gray-400 dark:text-gray-500 font-medium text-sm">
-                    <span className="line-through">View Project Details</span>
-                    <span className="ml-2 text-red-500 font-bold">SOLD OUT</span>
-                  </div>
-                ) : (
-                  <Link
-                    href={`/projects/${project.id}`}
-                    className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm group"
-                    onClick={async () => {
-                      // Increment views when clicking "View Project Details"
-                      await projectsService.incrementViews(project.id)
-                    }}
-                  >
-                    View Project Details
-                    <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                )}
+                <Link
+                  href={`/projects/${project.id}`}
+                  className={`inline-flex items-center font-medium text-sm group ${
+                    project.status === 'Sold Out' 
+                      ? 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                      : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'
+                  }`}
+                  onClick={async () => {
+                    // Increment views when clicking "View Project Details"
+                    await projectsService.incrementViews(project.id)
+                  }}
+                >
+                  {project.status === 'Sold Out' ? (
+                    <>
+                      <span className="line-through">View Project Details</span>
+                      <span className="ml-2 text-red-500 font-bold">(SOLD OUT)</span>
+                    </>
+                  ) : (
+                    <>
+                      View Project Details
+                      <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </Link>
               </div>
             </motion.div>
             ))
